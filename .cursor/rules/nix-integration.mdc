@@ -1,9 +1,7 @@
 ---
 description: Best practices for setting up local environment in nix with direnv
-globs: flake.nix, nix/*
 alwaysApply: false
 ---
-
 # NixOS Development Workflow
 
 ### **🔄 Environment Management**

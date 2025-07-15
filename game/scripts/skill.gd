@@ -1,0 +1,81 @@
+## Base skill class for all gem abilities in GemBrawl
+## Provides common interface and functionality for skills
+class_name Skill
+extends Node
+
+## Skill properties
+@export var skill_name: String = "Basic Skill"
+@export var description: String = ""
+@export var icon: Texture2D
+
+## Skill stats
+@export var cooldown: float = 5.0
+@export var damage: int = 20
+@export var range: float = 100.0
+@export var duration: float = 0.0  # For skills with lasting effects
+
+## Visual effects
+@export var skill_color: Color = Color.WHITE
+@export var particle_scene: PackedScene
+
+## Skill state
+var is_active: bool = false
+var owner_player: Player
+
+## Signals
+signal skill_started()
+signal skill_ended()
+signal hit_target(target: Node2D, damage: int)
+
+## Initialize the skill with its owner
+func setup(player: Player) -> void:
+	owner_player = player
+
+## Execute the skill - to be overridden by specific skills
+func execute() -> void:
+	if not owner_player or not owner_player.is_alive:
+		return
+	
+	is_active = true
+	skill_started.emit()
+	
+	# Skill-specific implementation in derived classes
+	_perform_skill()
+	
+	# Handle duration-based skills
+	if duration > 0:
+		await get_tree().create_timer(duration).timeout
+		_end_skill()
+	else:
+		_end_skill()
+
+## Perform the actual skill effect - override in derived classes
+func _perform_skill() -> void:
+	push_warning("Skill._perform_skill() not implemented for " + skill_name)
+
+## End the skill effect
+func _end_skill() -> void:
+	is_active = false
+	skill_ended.emit()
+
+## Check if a target is in range
+func is_target_in_range(target: Node2D) -> bool:
+	if not owner_player:
+		return false
+	return owner_player.global_position.distance_to(target.global_position) <= range
+
+## Apply damage to a target
+func apply_damage_to_target(target: Node2D, damage_multiplier: float = 1.0) -> void:
+	if target.has_method("take_damage"):
+		var final_damage: int = int(damage * damage_multiplier)
+		target.take_damage(final_damage, owner_player)
+		hit_target.emit(target, final_damage)
+
+## Create visual effect at position
+func create_effect(effect_position: Vector2) -> void:
+	if particle_scene:
+		var effect: Node2D = particle_scene.instantiate()
+		get_tree().current_scene.add_child(effect)
+		effect.global_position = effect_position
+		if effect.has_property("modulate"):
+			effect.modulate = skill_color 

@@ -1,0 +1,47 @@
+[gd_scene load_steps=5 format=3 uid="uid://hquhaqaymlux"]
+
+[ext_resource type="Script" path="res://scripts/player.gd" id="1"]
+[ext_resource type="Resource" path="res://resources/test_gem.tres" id="2"]
+
+[sub_resource type="PlaceholderTexture2D" id="2"]
+size = Vector2(40, 40)
+
+[sub_resource type="RectangleShape2D" id="1"]
+size = Vector2(40, 40)
+
+[node name="TestMovement" type="Node2D"]
+
+[node name="Background" type="ColorRect" parent="."]
+offset_right = 1024.0
+offset_bottom = 600.0
+color = Color(0.1, 0.1, 0.1, 1)
+
+[node name="Player" type="CharacterBody2D" parent="."]
+position = Vector2(512, 300)
+script = ExtResource("1")
+gem_data = ExtResource("2")
+
+[node name="Sprite2D" type="Sprite2D" parent="Player"]
+modulate = Color(0.5, 0.8, 1, 1)
+texture = SubResource("2")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
+shape = SubResource("1")
+
+[node name="HealthBar" type="ProgressBar" parent="Player"]
+offset_left = -20.0
+offset_top = -35.0
+offset_right = 20.0
+offset_bottom = -25.0
+value = 100.0
+show_percentage = false
+
+[node name="Instructions" type="Label" parent="."]
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 400.0
+offset_bottom = 100.0
+text = "Movement Test
+WASD or Arrow Keys - Move
+Space - Use Skill (not implemented yet)
+Gamepad Left Stick - Move"

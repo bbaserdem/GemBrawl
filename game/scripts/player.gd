@@ -41,11 +41,35 @@ func _physics_process(delta: float) -> void:
 	
 	# Handle movement input
 	var input_vector: Vector2 = Vector2.ZERO
-	input_vector.x = Input.get_axis("move_left", "move_right")
-	input_vector.y = Input.get_axis("move_up", "move_down")
 	
+	# Get analog stick input directly for smooth movement
+	var gamepad_vector: Vector2 = Vector2.ZERO
+	if Input.get_connected_joypads().size() > 0:
+		gamepad_vector.x = Input.get_joy_axis(0, JOY_AXIS_LEFT_X)
+		gamepad_vector.y = Input.get_joy_axis(0, JOY_AXIS_LEFT_Y)
+		
+		# Apply deadzone to avoid drift
+		if gamepad_vector.length() < 0.15:
+			gamepad_vector = Vector2.ZERO
+	
+	# Get keyboard input
+	var keyboard_vector: Vector2 = Vector2.ZERO
+	keyboard_vector.x = Input.get_axis("move_left", "move_right")
+	keyboard_vector.y = Input.get_axis("move_up", "move_down")
+	
+	# Use gamepad input if available, otherwise use keyboard
+	if gamepad_vector != Vector2.ZERO:
+		input_vector = gamepad_vector
+		# Clamp to unit circle for consistent max speed
+		if input_vector.length() > 1.0:
+			input_vector = input_vector.normalized()
+	else:
+		input_vector = keyboard_vector
+		if input_vector != Vector2.ZERO:
+			input_vector = input_vector.normalized()
+	
+	# Apply movement
 	if input_vector != Vector2.ZERO:
-		input_vector = input_vector.normalized()
 		velocity = input_vector * gem_data.movement_speed
 	else:
 		velocity = velocity.move_toward(Vector2.ZERO, gem_data.movement_speed * delta * 3)
@@ -71,10 +95,10 @@ func take_damage(damage: int, attacker: Node2D = null) -> void:
 	if invulnerable or not is_alive:
 		return
 	
-	var defeated: bool = gem_data.take_damage(damage)
+	var is_defeated: bool = gem_data.take_damage(damage)
 	health_changed.emit(gem_data.current_health, gem_data.max_health)
 	
-	if defeated:
+	if is_defeated:
 		is_alive = false
 		defeated.emit()
 		set_physics_process(false)

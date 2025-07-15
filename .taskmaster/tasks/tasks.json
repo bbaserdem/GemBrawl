@@ -35,20 +35,74 @@
         "dependencies": [
           2
         ],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Configure Input Mapping",
+            "description": "Set up input mapping for keyboard and controller in Godot.",
+            "dependencies": [],
+            "details": "Use Godot's InputMap to define actions for player movement. Map 'move_left', 'move_right', 'move_up', and 'move_down' to both keyboard keys (WASD) and controller analog stick inputs. Ensure that the input actions are correctly configured in the project settings.",
+            "status": "done",
+            "testStrategy": "Verify that input actions are correctly triggered by both keyboard and controller inputs in the Godot editor."
+          },
+          {
+            "id": 2,
+            "title": "Implement Player Movement Logic",
+            "description": "Develop the logic to handle player movement based on input.",
+            "dependencies": [
+              1
+            ],
+            "details": "Create a script attached to the player character. Use the _process or _physics_process function to check for input actions defined in the InputMap. Calculate movement direction and apply velocity to the player character using Godot's Vector2 for 2D movement or Vector3 for 3D movement.",
+            "status": "done",
+            "testStrategy": "Test the player character in the game scene to ensure it moves in the correct direction based on input."
+          },
+          {
+            "id": 3,
+            "title": "Implement Movement Speed and Acceleration",
+            "description": "Add movement speed and acceleration to the player movement.",
+            "dependencies": [
+              2
+            ],
+            "details": "Define variables for movement speed and acceleration in the player script. Modify the movement logic to gradually increase the player's velocity to the maximum speed using acceleration. Ensure that the player can decelerate smoothly when input stops.\n<info added on 2025-07-15T21:00:40.287Z>\nMovement speed is controlled by `gem_data.movement_speed` set to 300.0 pixels/second. Smooth deceleration is achieved using `velocity.move_toward()` with a factor of 3. The player moves at a constant speed when input is detected, ensuring responsive and smooth movement.\n</info added on 2025-07-15T21:00:40.287Z>",
+            "status": "done",
+            "testStrategy": "Check that the player accelerates smoothly to the maximum speed and decelerates when input is released."
+          },
+          {
+            "id": 4,
+            "title": "Ensure Smooth Movement Transitions",
+            "description": "Refine the movement to ensure smooth transitions and responsiveness.",
+            "dependencies": [
+              3
+            ],
+            "details": "Adjust the movement logic to include damping or smoothing techniques, such as lerping the velocity or using Godot's built-in physics properties. Ensure that the player movement feels responsive and natural.\n<info added on 2025-07-15T21:04:16.345Z>\nSuccessfully improved controller support for smooth analog movement by implementing direct analog stick reading using Input.get_joy_axis(). Added a proper deadzone of 0.15 to prevent stick drift, ensuring movement is proportional to stick position, with slight tilt resulting in slow movement and full tilt resulting in fast movement. Properly handles both gamepad and keyboard inputs with correct priority, and clamps input to the unit circle to ensure consistent diagonal movement speed.\n</info added on 2025-07-15T21:04:16.345Z>",
+            "status": "done",
+            "testStrategy": "Playtest the movement to ensure it feels smooth and responsive, making adjustments as necessary."
+          },
+          {
+            "id": 5,
+            "title": "Integrate and Test Player Movement",
+            "description": "Integrate the movement system into the game and conduct comprehensive testing.",
+            "dependencies": [
+              4
+            ],
+            "details": "Integrate the player movement system into the main game scene. Conduct thorough testing to ensure that the movement system works seamlessly with other game mechanics and that there are no conflicts with other input systems.",
+            "status": "done",
+            "testStrategy": "Perform end-to-end testing in the game environment to ensure that player movement is consistent and interacts correctly with other game elements."
+          }
+        ]
       },
       {
         "id": 4,
         "title": "Create Gem Class and Attributes",
         "description": "Define the base Gem class with attributes for unique visuals, stats, and skills.",
-        "details": "Create gem.gd script to define properties such as speed, power, durability, and skills. Implement a method to initialize these attributes based on the selected gem.",
-        "testStrategy": "Instantiate a gem in the game and verify that its attributes are correctly initialized and displayed.",
-        "priority": "medium",
+        "status": "done",
         "dependencies": [
           2
         ],
-        "status": "pending",
+        "priority": "medium",
+        "details": "The Gem class has been implemented in gem.gd with attributes including visual properties (name, color, texture), combat stats (health, damage, defense), movement properties (speed, dash), and skill properties (cooldown, damage multiplier). Methods for damage handling, healing, and health percentage calculation have also been included.",
+        "testStrategy": "Instantiate a gem in the game and verify that its attributes are correctly initialized and displayed. Test the methods for damage handling, healing, and health percentage calculation to ensure they function as expected.",
         "subtasks": []
       },
       {
@@ -69,14 +123,33 @@
         "id": 6,
         "title": "Develop Gem Skills Framework",
         "description": "Create a framework for implementing gem skills including Glide, Refract, Cut, Polish, and Shine.",
-        "details": "Define skill.gd as a base class and create individual scripts for each skill (cut.gd, polish.gd, shine.gd). Implement cooldown mechanics and skill effects.",
-        "testStrategy": "Test each skill in isolation to ensure they function correctly and adhere to cooldown rules.",
-        "priority": "medium",
+        "status": "pending",
         "dependencies": [
           4
         ],
-        "status": "pending",
-        "subtasks": []
+        "priority": "medium",
+        "details": "The base skill framework has been implemented in skill.gd with a common interface for all abilities. Three main skills have been implemented: Cut (piercing dash in cut.gd), Polish (defense/heal in polish.gd), and Shine (area blast in shine.gd). Still need to implement the two base skills shared by all gems: Glide (evasion) and Refract (defense). Implement cooldown mechanics and skill effects for these remaining skills.",
+        "testStrategy": "Test each skill in isolation to ensure they function correctly and adhere to cooldown rules. Verify that Glide and Refract are implemented correctly and integrate seamlessly with the existing framework.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Glide Skill",
+            "description": "Develop the Glide skill for evasion, ensuring it integrates with the existing skill framework.",
+            "status": "pending",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Implement Refract Skill",
+            "description": "Develop the Refract skill for defense, ensuring it integrates with the existing skill framework.",
+            "status": "pending",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          }
+        ]
       },
       {
         "id": 7,
@@ -198,11 +271,85 @@
         ],
         "status": "pending",
         "subtasks": []
+      },
+      {
+        "id": 16,
+        "title": "Implement Game Round Management System",
+        "description": "Develop a system to manage game rounds, including start conditions, countdown timer, win conditions, and transitions.",
+        "details": "Create a RoundManager script to handle the lifecycle of a game round. Implement logic to determine round start conditions, such as all players being ready. Use a countdown timer to signal the start of the round. Implement the last-player-standing win condition by monitoring player states and ending the round when only one player remains. Ensure smooth transitions between rounds and provide announcements for round start, ongoing status, and end. Integrate with the GameManager for state transitions and ensure compatibility with the main game UI for displaying round information.",
+        "testStrategy": "Test the round management system by simulating multiple rounds. Verify that rounds start only when conditions are met, the countdown timer functions correctly, and the round ends with the correct win condition. Ensure transitions between rounds are smooth and announcements are displayed correctly. Check integration with the GameManager and UI to ensure all elements update as expected.",
+        "status": "pending",
+        "dependencies": [
+          5,
+          12,
+          11
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 17,
+        "title": "Create Launcher Screen UI with Main Menu Navigation",
+        "description": "Design and implement the launcher screen UI with navigation options for Practice Mode, Open Room, Join Room, and Settings.",
+        "details": "Utilize Godot's UI system to create a visually appealing launcher screen. Implement buttons for navigating to Practice Mode, Open Room, Join Room, and Settings. Ensure each button triggers the appropriate scene transition using Godot's scene management functions. Design the UI to be intuitive and consistent with the overall game theme. Consider using a grid or vertical layout for the menu options, and ensure that the UI is responsive to different screen sizes. Implement animations for button interactions to enhance user experience.",
+        "testStrategy": "Verify that the launcher screen displays correctly on various screen sizes. Test each navigation button to ensure it transitions to the correct scene: Practice Mode should lead to the practice mode scene, Open Room and Join Room should connect to the multiplayer lobby system, and Settings should open the settings menu. Ensure all transitions are smooth and that the UI elements are interactive and responsive.",
+        "status": "pending",
+        "dependencies": [
+          2,
+          9,
+          8
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 18,
+        "title": "Implement AI Opponent for Practice Mode",
+        "description": "Develop an AI opponent for practice mode with basic behaviors such as movement towards the player, dodging, and strategic use of skills based on gem type.",
+        "details": "To implement the AI opponent, start by creating a new script, ai_opponent.gd, that will handle the AI's behavior. Use Godot's built-in AI navigation tools to allow the AI to move towards the player. Implement a basic state machine to manage different AI states such as 'idle', 'chase', 'dodge', and 'attack'. For movement, use pathfinding to navigate the arena and approach the player. Implement dodging behavior by detecting incoming attacks and moving the AI to a safe position. For skill usage, integrate with the existing gem skills framework (Task 6) to allow the AI to use skills strategically based on its current gem type. Ensure the AI can evaluate the player's position and choose the appropriate skill to use. Consider adding randomness to the AI's decision-making to make it less predictable.",
+        "testStrategy": "Test the AI opponent in practice mode by observing its behavior in various scenarios. Ensure the AI can successfully navigate towards the player, dodge attacks, and use skills appropriately. Verify that the AI's behavior changes based on the gem type it is using. Conduct multiple play sessions to ensure the AI provides a challenging yet fair practice experience. Adjust parameters such as reaction time and skill usage frequency to balance difficulty.",
+        "status": "pending",
+        "dependencies": [
+          5,
+          8,
+          6
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 19,
+        "title": "Implement Multiplayer Networking Foundation",
+        "description": "Develop the foundational multiplayer networking system using Godot's MultiplayerAPI, including peer-to-peer connections, player state synchronization, and reliable message passing for game events.",
+        "details": "Begin by setting up the networking environment using Godot's MultiplayerAPI. Implement peer-to-peer connections to allow direct communication between players. Ensure that player states, such as position and actions, are synchronized across all clients. Use Godot's reliable message passing to handle game events, ensuring that critical actions are consistently communicated and executed across the network. Consider network latency and implement interpolation techniques to smooth out player movements. Additionally, ensure that the networking code is modular and can be easily integrated with existing game systems, such as the lobby and game state management.",
+        "testStrategy": "Test the multiplayer networking system by simulating multiple players in a networked environment. Verify that peer-to-peer connections are established correctly and that player states are synchronized accurately across all clients. Test reliable message passing by triggering various game events and ensuring they are consistently received by all players. Conduct latency tests to ensure smooth gameplay and implement adjustments as necessary. Use debugging tools to monitor network traffic and identify any issues with data transmission.",
+        "status": "pending",
+        "dependencies": [
+          9,
+          12
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 20,
+        "title": "Implement Base Skills: Glide and Refract",
+        "description": "Develop the base skills Glide for evasion and Refract for defense, ensuring they are integrated across all gem types with proper input handling and visual effects.",
+        "details": "To implement the base skills Glide and Refract, start by extending the existing skill framework (Task 6). Create new scripts glide.gd and refract.gd under the skills directory. For Glide, implement a temporary speed boost and invincibility frames, using Godot's AnimationPlayer for visual effects. For Refract, implement a temporary shield that reduces incoming damage, with a visual effect indicating activation. Ensure these skills are accessible to all gem types by integrating them into the gem.gd script (Task 4). Use Godot's InputMap to handle input for activating these skills, ensuring compatibility with both keyboard and controller inputs (Task 14).",
+        "testStrategy": "Test the Glide and Refract skills in a controlled environment. Verify that activating Glide increases speed and provides invincibility for a short duration, and that Refract reduces damage when active. Ensure visual effects play correctly during skill activation. Test input handling by activating skills using both keyboard and controller, confirming responsiveness and correct mapping. Conduct tests across different gem types to ensure skills are universally accessible and function consistently.",
+        "status": "pending",
+        "dependencies": [
+          4,
+          6,
+          14
+        ],
+        "priority": "medium",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-07-15T18:49:15.591Z",
-      "updated": "2025-07-15T20:16:10.045Z",
+      "updated": "2025-07-15T21:10:52.073Z",
       "description": "Tasks for master context"
     }
   }

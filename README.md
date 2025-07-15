@@ -1,4 +1,10 @@
+<div align="center">
+
 # GemBrawl
+
+<img src="game/icon.png" alt="GemBrawl" width="128" height="128">
+
+</div>
 
 A top-down multiplayer brawler game built with Godot where gem warriors battle for supremacy.
 

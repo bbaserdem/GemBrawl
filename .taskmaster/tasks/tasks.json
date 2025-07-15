@@ -1,0 +1,209 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Setup Project Repository",
+        "description": "Initialize a new Godot project repository for Gembrawl, including version control setup with Git.",
+        "details": "Create a new directory for the project and initialize it as a Git repository. Use Godot 4.0 or later for the project. Ensure .gitignore is set up to exclude build files and user-specific settings.",
+        "testStrategy": "Verify that the repository is initialized correctly and that the project can be opened in Godot.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 2,
+        "title": "Create Project Structure",
+        "description": "Establish the recommended file structure for the Gembrawl project as outlined in the PRD.",
+        "details": "Create the following directories: scenes/, scripts/, assets/, and networking/. Inside scenes/, create subdirectories for launcher/, player/, arena/, ui/, and lobby/. Inside scripts/, create gem.gd, player.gd, skill.gd, and a folder for skills with cut.gd, polish.gd, and shine.gd.",
+        "testStrategy": "Check that the directory structure matches the specified layout and that all necessary files are created.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Implement Basic Player Movement",
+        "description": "Develop the core player movement mechanics for the game using Godot's input system.",
+        "details": "Use Godot's InputEvent to handle player movement via the controller's analog stick or keyboard (WASD). Implement movement speed and direction based on player input. Ensure smooth transitions and responsiveness.",
+        "testStrategy": "Test player movement in the game scene to ensure it responds correctly to input and behaves as expected.",
+        "priority": "high",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Create Gem Class and Attributes",
+        "description": "Define the base Gem class with attributes for unique visuals, stats, and skills.",
+        "details": "Create gem.gd script to define properties such as speed, power, durability, and skills. Implement a method to initialize these attributes based on the selected gem.",
+        "testStrategy": "Instantiate a gem in the game and verify that its attributes are correctly initialized and displayed.",
+        "priority": "medium",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 5,
+        "title": "Implement Core Combat Mechanics",
+        "description": "Develop the core combat systems including HP management, death, and respawn logic.",
+        "details": "Create player.gd script to manage HP, detect when HP reaches 0, and handle respawn logic. Implement a simple UI to display HP.",
+        "testStrategy": "Simulate combat scenarios to ensure HP decreases correctly and respawn occurs as expected.",
+        "priority": "high",
+        "dependencies": [
+          3,
+          4
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Develop Gem Skills Framework",
+        "description": "Create a framework for implementing gem skills including Glide, Refract, Cut, Polish, and Shine.",
+        "details": "Define skill.gd as a base class and create individual scripts for each skill (cut.gd, polish.gd, shine.gd). Implement cooldown mechanics and skill effects.",
+        "testStrategy": "Test each skill in isolation to ensure they function correctly and adhere to cooldown rules.",
+        "priority": "medium",
+        "dependencies": [
+          4
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Design Arena Layout",
+        "description": "Create the hexagonal isometric arena layout with environmental hazards as specified in the PRD.",
+        "details": "Use Godot's TileMap to design the arena layout. Include hexagonal tiles and implement traps such as spike traps and lava tiles.",
+        "testStrategy": "Playtest the arena to ensure that the layout is functional and that hazards behave as intended.",
+        "priority": "medium",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "Implement Practice Mode Logic",
+        "description": "Develop the logic for the single-player practice mode against an AI or dummy opponent.",
+        "details": "Create a practice mode scene that allows players to select a gem and an opponent. Implement AI behavior for the dummy opponent.",
+        "testStrategy": "Test the practice mode to ensure that the player can select gems and that the AI behaves as expected.",
+        "priority": "high",
+        "dependencies": [
+          5,
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Create Multiplayer Lobby System",
+        "description": "Implement the lobby creation and joining system for local and online multiplayer.",
+        "details": "Use Godot's high-level networking API to create a lobby system where players can create and join rooms. Implement features for setting lobby name, arena, and max players.",
+        "testStrategy": "Test the lobby system with multiple players to ensure that rooms can be created and joined successfully.",
+        "priority": "high",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Implement Character Selection Flow",
+        "description": "Develop the character selection flow where players can choose their gems before starting a match.",
+        "details": "Create a character selection scene that displays gem stats, skills, and cooldowns. Ensure that all players can see each other's selections before starting the game.",
+        "testStrategy": "Test the character selection process to ensure it functions correctly and that selections are communicated to all players.",
+        "priority": "medium",
+        "dependencies": [
+          9
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 11,
+        "title": "Design Main Game UI",
+        "description": "Create the main game UI elements including HP bars, skill cooldown indicators, and countdown timer.",
+        "details": "Use Godot's UI system to design and implement the main game screen UI elements as specified in the PRD.",
+        "testStrategy": "Playtest the game to ensure that all UI elements are displayed correctly and update in real-time during gameplay.",
+        "priority": "medium",
+        "dependencies": [
+          8,
+          10
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 12,
+        "title": "Implement Game State Management",
+        "description": "Develop the game state management system to handle transitions between different game states (e.g., waiting, playing, game over).",
+        "details": "Create a GameManager script to manage the game state and transitions. Implement logic for starting the game, handling player deaths, and determining the winner.",
+        "testStrategy": "Test the game state transitions to ensure they occur correctly and that the game ends when only one player remains.",
+        "priority": "medium",
+        "dependencies": [
+          5,
+          11
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 13,
+        "title": "Integrate Audio Settings",
+        "description": "Implement audio settings for SFX and music volume control in the settings menu.",
+        "details": "Use Godot's AudioStreamPlayer to manage audio playback and implement sliders for adjusting SFX and music volume in the settings menu.",
+        "testStrategy": "Test the audio settings to ensure that volume adjustments work correctly and affect the audio output as expected.",
+        "priority": "low",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 14,
+        "title": "Implement Controller Support",
+        "description": "Ensure full controller support for gameplay, including remappable controls.",
+        "details": "Use Godot's InputMap to allow players to remap controls for both keyboard and controller. Ensure that all gameplay actions are responsive to controller input.",
+        "testStrategy": "Test gameplay using various controllers to ensure that all actions are responsive and correctly mapped.",
+        "priority": "medium",
+        "dependencies": [
+          3
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 15,
+        "title": "Conduct Playtesting and Bug Fixing",
+        "description": "Perform extensive playtesting to identify and fix bugs, ensuring a smooth gameplay experience.",
+        "details": "Organize playtesting sessions with multiple players to gather feedback and identify bugs. Prioritize fixing critical issues before release.",
+        "testStrategy": "Collect feedback from playtesters and track bugs to ensure they are resolved before the MVP release.",
+        "priority": "high",
+        "dependencies": [
+          12,
+          14
+        ],
+        "status": "pending",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-07-15T18:49:15.591Z",
+      "updated": "2025-07-15T18:49:15.591Z",
+      "description": "Tasks for master context"
+    }
+  }
+}

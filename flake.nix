@@ -15,8 +15,22 @@
     flake-utils.lib.eachDefaultSystem (system: let
       pkgs = import nixpkgs {inherit system;};
       exportTemplateDir = "${pkgs.godotPackages_4_3.export-template}/share/godot/export_templates/4.3.stable";
+
+      # Function to create script
+      mkScript = name: text: let
+        script = pkgs.writeShellScriptBin name text;
+      in
+        script;
+
+      # Define script; these are going to be functionally aliases
+      scripts = [
+        (mkScript "tm" ''npx --yes --package=task-master-ai task-master "$@"'')
+      ];
     in {
       devShell = pkgs.mkShell {
+        # Environment
+        GODOT4_EXPORT_TEMPLATES_DIR = exportTemplateDir;
+        # Available packages
         packages =
           (with pkgs.godotPackages_4_3; [
             godot
@@ -28,8 +42,9 @@
             libpulseaudio # For sound support
             xdg-utils # Open file dialogs
             git # Version control
-          ]);
-        GODOT4_EXPORT_TEMPLATES_DIR = exportTemplateDir;
+          ])
+          ++ scripts;
+        # Shell hooks
         shellHook = ''
           # Use system export-template for reproducibility
           mkdir -p "$HOME/.local/share/godot/export_templates"

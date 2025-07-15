@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "godot-mcp": "github:Coding-Solo/godot-mcp"
+  }
+}

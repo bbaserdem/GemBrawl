@@ -33,7 +33,10 @@
         shellHook = ''
           # Use system export-template for reproducibility
           mkdir -p "$HOME/.local/share/godot/export_templates"
-          ln -sf "${exportTemplateDir}" "$HOME/.local/share/godot/export_templates/4.3.stable"
+          ln -snf "${exportTemplateDir}" "$HOME/.local/share/godot/export_templates/4.3.stable"
+
+          # Make our local node packages available to our shell; for mcp's
+          export PATH="./node_modules/.bin:$PATH"
         '';
       };
     });

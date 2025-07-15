@@ -1,0 +1,30 @@
+---
+description: Best practices for setting up local environment in nix with direnv
+globs: flake.nix, nix/*
+alwaysApply: false
+---
+
+# NixOS Development Workflow
+
+### **🔄 Environment Management**
+
+After the dev shell is updated, use `direnv` reload command to apply changes.
+```bash
+# ✅ Enter development shell (automatically via direnv)
+# Just cd into the project - direnv handles the rest
+
+# ✅ Rebuild environment after adding packages
+nix develop
+
+# ✅ Check environment status
+nix flake show
+```
+
+---
+
+### **Adding New Dependencies**
+
+When new dependencies are required in the environment;
+- Never edit `flake.nix`
+- Suggest changes to `flake.nix` without updating it.
+- If there is a new dependency needed, always mention how viable it is to use in NixOS.

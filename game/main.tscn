@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3]
+
+[node name="Main" type="Node2D"]
+
+[node name="Label" type="Label" parent="."]
+
+position = Vector2(200, 150)
+text = "Hello Godot from NixOS!"

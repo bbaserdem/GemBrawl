@@ -1,0 +1,130 @@
+# =============================================================================
+# GemBrawl Project .gitignore
+# Comprehensive ignore patterns for Godot game development
+# =============================================================================
+
+# =============================================================================
+# SECRETS & CREDENTIALS (CRITICAL - NEVER COMMIT)
+# =============================================================================
+.env*
+!.env.example
+!.env.template
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets.json
+credentials.json
+
+# =============================================================================
+# GODOT SPECIFIC
+# =============================================================================
+# Godot-specific ignores
+.import/
+export.cfg
+export_presets.cfg
+export_credentials.cfg
+
+# Imported translations (automatically generated from CSV files)
+*.translation
+
+# Mono-specific ignores (C# projects)
+.mono/
+data_*/
+mono_crash.*.json
+
+# Build outputs
+builds/
+export/
+
+# Godot 4+ specific ignores
+.godot/
+.nomedia
+
+# =============================================================================
+# NIX & DIRENV
+# =============================================================================
+!.envrc
+.direnv/
+result
+result-*
+
+# =============================================================================
+# LOGS & TEMPORARY FILES
+# =============================================================================
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+.tmp/
+temp/
+tmp/
+
+# =============================================================================
+# IDE & EDITORS
+# =============================================================================
+# VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Vim
+*.swp
+*.swo
+*~
+.netrwhist
+
+# =============================================================================
+# OPERATING SYSTEM
+# =============================================================================
+# macOS
+.DS_Store
+.DS_Store?
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# =============================================================================
+# GAME ASSETS & LARGE FILES
+# =============================================================================
+*.autosave
+
+# =============================================================================
+# PROJECT SPECIFIC
+# =============================================================================
+# Add any project-specific ignores here

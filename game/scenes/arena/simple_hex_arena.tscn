@@ -1,0 +1,173 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/camera_controller.gd" id="3"]
+
+[sub_resource type="RectangleShape2D" id="1"]
+size = Vector2(40, 40)
+
+[sub_resource type="GDScript" id="2"]
+script/source = "extends Node2D
+
+## Simple Hexagonal Arena
+## Draws a hexagonal arena using _draw() for testing
+
+@export var arena_radius: int = 7
+@export var hex_size: float = 32.0
+@export var player_count: int = 4
+@export var isometric_angle: float = 45.0  # Adjustable viewing angle (45° = between isometric and top-down)
+@export var arena_rotation: float = 30.0  # Rotate arena to point up
+
+var floor_tiles: Array[Vector2i] = []
+var hazard_tiles: Dictionary = {}  # Vector2i -> hazard_type
+var spawn_points: Array[Vector2] = []
+
+var floor_color = Color(0.3, 0.3, 0.3)
+var lava_color = Color(1.0, 0.3, 0.0)
+var spike_color = Color(0.6, 0.6, 0.7)
+
+func _ready() -> void:
+	generate_arena()
+	generate_hazards()
+	generate_spawn_points()
+	queue_redraw()
+
+func generate_arena() -> void:
+	# Generate hexagonal grid
+	for q in range(-arena_radius, arena_radius + 1):
+		var r1 = max(-arena_radius, -q - arena_radius)
+		var r2 = min(arena_radius, -q + arena_radius)
+		
+		for r in range(r1, r2 + 1):
+			floor_tiles.append(Vector2i(q, r))
+
+func generate_hazards() -> void:
+	var hazard_count = 10
+	
+	for i in range(hazard_count):
+		var attempts = 0
+		while attempts < 100:
+			attempts += 1
+			
+			var q = randi_range(-arena_radius + 2, arena_radius - 2)
+			var r = randi_range(-arena_radius + 2, arena_radius - 2)
+			
+			if abs(q + r) <= arena_radius - 2:
+				var pos = Vector2i(q, r)
+				if not hazard_tiles.has(pos):
+					# 1 = lava, 2 = spikes
+					hazard_tiles[pos] = randi_range(1, 2)
+					break
+
+func generate_spawn_points() -> void:
+	var angle_step = TAU / player_count
+	var spawn_radius = arena_radius * 0.7
+	
+	for i in range(player_count):
+		var angle = i * angle_step - PI / 2
+		
+		var x = spawn_radius * cos(angle)
+		var y = spawn_radius * sin(angle)
+		
+		var q = round(x)
+		var r = round(y)
+		
+		if abs(q + r) <= arena_radius:
+			var world_pos = hex_to_world(Vector2i(q, r))
+			spawn_points.append(world_pos)
+			
+			# Add spawn marker
+			var marker = Marker2D.new()
+			marker.name = \"SpawnPoint\" + str(i + 1)
+			marker.position = world_pos
+			add_child(marker)
+
+func hex_to_world(hex: Vector2i) -> Vector2:
+	# Pointy-top hexagon layout
+	var x = hex_size * (sqrt(3.0) * hex.x + sqrt(3.0)/2.0 * hex.y)
+	var y = hex_size * (3.0/2.0 * hex.y)
+	
+	# Rotate arena to have corner pointing up
+	var rotated = Vector2(x, y).rotated(deg_to_rad(arena_rotation))
+	
+	# Apply adjustable isometric transformation
+	var iso_x = rotated.x
+	var iso_y = rotated.y * sin(deg_to_rad(isometric_angle))
+	
+	return Vector2(iso_x, iso_y)
+
+func _draw() -> void:
+	# Draw floor tiles
+	for tile in floor_tiles:
+		var pos = hex_to_world(tile)
+		draw_hexagon(pos, hex_size, floor_color)
+	
+	# Draw hazards
+	for tile in hazard_tiles:
+		var pos = hex_to_world(tile)
+		var color = lava_color if hazard_tiles[tile] == 1 else spike_color
+		draw_hexagon(pos, hex_size, color)
+	
+	# Draw spawn points
+	for spawn in spawn_points:
+		draw_circle(spawn, 10, Color.CYAN)
+
+func draw_hexagon(center: Vector2, size: float, color: Color) -> void:
+	var points = PackedVector2Array()
+	
+	# Draw pointy-top hexagon
+	for i in range(6):
+		var angle = PI / 3.0 * i + PI / 6.0  # Pointy-top orientation
+		var local_x = cos(angle) * size
+		var local_y = sin(angle) * size
+		
+		# Apply rotation
+		var rotated = Vector2(local_x, local_y).rotated(deg_to_rad(arena_rotation))
+		
+		# Apply isometric squashing
+		var iso_point = Vector2(rotated.x, rotated.y * sin(deg_to_rad(isometric_angle)))
+		
+		var point = center + iso_point
+		points.append(point)
+	
+	# Draw the top face
+	draw_colored_polygon(points, color)
+	
+	# Draw the hexagon outline for better visibility
+	draw_polyline(points + PackedVector2Array([points[0]]), Color(0, 0, 0, 0.3), 1.0)
+	
+	# Draw 3D effect
+	var depth = 6.0
+	var darker_color = color.darkened(0.4)
+	
+	# Determine which faces are visible based on rotation
+	# For isometric view, typically bottom faces are visible
+	var visible_faces = []
+	for i in range(6):
+		var angle = PI / 3.0 * i + PI / 6.0 + deg_to_rad(arena_rotation)
+		if sin(angle) > 0:  # Face is pointing downward
+			visible_faces.append(i)
+	
+	# Draw visible side faces
+	for i in visible_faces:
+		var face_points = PackedVector2Array([
+			points[i],
+			points[(i + 1) % 6],
+			points[(i + 1) % 6] + Vector2(0, depth),
+			points[i] + Vector2(0, depth)
+		])
+		draw_colored_polygon(face_points, darker_color)
+
+func get_spawn_position(player_index: int) -> Vector2:
+	if player_index < spawn_points.size():
+		return spawn_points[player_index]
+	return Vector2.ZERO
+"
+
+[node name="SimpleHexArena" type="Node2D"]
+z_index = -1
+script = SubResource("2")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+zoom = Vector2(0.5, 0.5)
+position = Vector2(0, -50)
+script = ExtResource("3") 

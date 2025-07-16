@@ -1,0 +1,64 @@
+[gd_scene load_steps=5 format=3 uid="uid://cppyt08pb3j8s"]
+
+[ext_resource type="PackedScene" path="res://scenes/arena/hex_arena_3d.tscn" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/player/player_3d.tscn" id="2"]
+[ext_resource type="Script" path="res://scripts/camera_controller_3d.gd" id="3"]
+
+[sub_resource type="Environment" id="1"]
+background_mode = 1
+background_color = Color(0.15, 0.15, 0.2, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.4, 0.4, 0.5, 1)
+ambient_light_energy = 0.5
+
+[node name="Main" type="Node3D"]
+
+[node name="HexArena3D" parent="." instance=ExtResource("1")]
+
+[node name="Player3D" parent="." instance=ExtResource("2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+
+[node name="CameraController" type="Node3D" parent="."]
+script = ExtResource("3")
+follow_smoothness = 8.0
+
+[node name="CameraPivot" type="Node3D" parent="CameraController"]
+transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 0, 0)
+
+[node name="Camera3D" type="Camera3D" parent="CameraController/CameraPivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 20)
+fov = 45.0
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("1")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.707107, -0.5, 0.5, 0, 0.707107, 0.707107, -0.707107, -0.5, 0.5, 0, 10, 0)
+light_energy = 0.8
+shadow_enabled = true
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="Instructions" type="Label" parent="UI"]
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 450.0
+offset_bottom = 200.0
+text = "3D Hexagonal Arena - Isometric View
+
+Movement:
+• WASD/Arrows/Left Stick - Move player
+
+Camera Controls:
+• Right Stick Up/Down - Zoom in/out
+• Right Stick Left/Right - Tilt camera
+• R3 (Right Stick Press) - Toggle camera mode
+• Page Up/Down - Tilt camera (keyboard)
+• Mouse Wheel - Zoom
+• Middle Mouse - Pan
+
+Camera Modes:
+• Follow Player - Camera follows player
+• Static - Camera centered on arena
+
+Space/A Button - Use skill (not implemented)"

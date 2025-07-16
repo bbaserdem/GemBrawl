@@ -17,6 +17,9 @@ var invulnerability_duration: float = 0.5
 var skill_ready: bool = true
 var skill_cooldown_timer: float = 0.0
 
+## Camera/movement settings
+var current_isometric_angle: float = 45.0
+
 ## Signals
 signal health_changed(new_health: int, max_health: int)
 signal defeated()
@@ -68,9 +71,36 @@ func _physics_process(delta: float) -> void:
 		if input_vector != Vector2.ZERO:
 			input_vector = input_vector.normalized()
 	
-	# Apply movement
+	# Apply movement with hex grid alignment
 	if input_vector != Vector2.ZERO:
-		velocity = input_vector * gem_data.movement_speed
+		# In an isometric view, we need to map input directions to world movement
+		# The hex arena is rotated 30° and uses isometric projection
+		
+		# Define the isometric movement directions
+		# In a hex grid rotated 30°, these are the primary movement axes:
+		# - North (top vertex): -90° + 30° = -60° in screen space
+		# - East (right vertices): -30° and 30° in screen space
+		# - South (bottom vertex): 90° + 30° = 120° in screen space
+		# - West (left vertices): 150° and -150° in screen space
+		
+		# For smooth 8-directional movement in isometric space:
+		# Map input X to move along the isometric X axis (NE to SW)
+		# Map input Y to move along the isometric Y axis (NW to SE)
+		
+		var iso_right = Vector2(cos(deg_to_rad(30)), sin(deg_to_rad(30)))
+		var iso_up = Vector2(cos(deg_to_rad(-60)), sin(deg_to_rad(-60)))
+		
+		# Combine the input with isometric directions
+		var world_movement = iso_right * input_vector.x + iso_up * input_vector.y
+		
+		# Apply the isometric Y-squashing for the visual projection
+		var isometric_angle = deg_to_rad(current_isometric_angle)
+		var screen_movement = Vector2(
+			world_movement.x,
+			world_movement.y * sin(isometric_angle)
+		)
+		
+		velocity = screen_movement.normalized() * gem_data.movement_speed
 	else:
 		velocity = velocity.move_toward(Vector2.ZERO, gem_data.movement_speed * delta * 3)
 	
@@ -123,4 +153,8 @@ func respawn(spawn_position: Vector2) -> void:
 	is_alive = true
 	gem_data.current_health = gem_data.max_health
 	health_changed.emit(gem_data.current_health, gem_data.max_health)
-	set_physics_process(true) 
+	set_physics_process(true)
+
+## Set the isometric angle for movement calculations
+func set_isometric_angle(angle: float) -> void:
+	current_isometric_angle = angle 

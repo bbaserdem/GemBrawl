@@ -161,8 +161,52 @@
         "dependencies": [
           2
         ],
-        "status": "pending",
-        "subtasks": []
+        "status": "in-progress",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design Hexagonal Tile Layout",
+            "description": "Create the basic hexagonal tile layout for the arena using Godot's TileMap.",
+            "dependencies": [],
+            "details": "Use Godot's TileMap to arrange hexagonal tiles in an isometric view. Ensure the layout supports the hexagonal shape of the arena.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Implement Environmental Hazards",
+            "description": "Add environmental hazards such as spikes and lava tiles to the arena layout.",
+            "dependencies": [
+              1
+            ],
+            "details": "Design and place spike traps and lava tiles within the hexagonal arena. Ensure these hazards are functional and visually distinct.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Design Player Spawn Points",
+            "description": "Determine and implement spawn points for 2-4 players within the arena.",
+            "dependencies": [
+              1
+            ],
+            "details": "Identify strategic locations for player spawn points that ensure fair starting positions. Implement these points in the arena layout.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Playtest Arena Layout",
+            "description": "Conduct playtests to ensure the arena layout is functional and balanced.",
+            "dependencies": [
+              2,
+              3
+            ],
+            "details": "Playtest the arena with 2-4 players to verify that the layout is balanced and that environmental hazards behave as intended.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
       },
       {
         "id": 8,
@@ -349,7 +393,7 @@
     ],
     "metadata": {
       "created": "2025-07-15T18:49:15.591Z",
-      "updated": "2025-07-15T21:10:52.073Z",
+      "updated": "2025-07-15T21:25:05.309Z",
       "description": "Tasks for master context"
     }
   }

@@ -1,0 +1,63 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="TileSet" uid="uid://arena-tileset" path="res://tilesets/hex_tileset.tres" id="1"]
+
+[sub_resource type="GDScript" id="1"]
+script/source = "extends Node2D
+
+## Basic Arena controller
+## Manages the hexagonal arena layout and game logic
+
+@export var arena_radius: int = 7  # Number of hex tiles from center to edge
+@export var spawn_points: Array[Vector2] = []
+
+@onready var tile_map: TileMap = $TileMap
+@onready var hazards_layer: TileMap = $HazardsLayer
+@onready var spawn_markers: Node2D = $SpawnMarkers
+
+func _ready() -> void:
+	setup_arena()
+	setup_spawn_points()
+
+func setup_arena() -> void:
+	# Generate the hexagonal arena
+	ArenaGenerator.generate_hex_arena(tile_map, arena_radius)
+	
+	# Generate some hazards
+	ArenaGenerator.generate_hazards(hazards_layer, arena_radius, 10)
+
+func setup_spawn_points() -> void:
+	# Get spawn points for 4 players
+	spawn_points = ArenaGenerator.get_spawn_points(tile_map, 4, arena_radius)
+	
+	# Create visual markers for spawn points
+	for i in range(spawn_points.size()):
+		var marker = Marker2D.new()
+		marker.name = \"SpawnPoint\" + str(i + 1)
+		marker.position = spawn_points[i]
+		spawn_markers.add_child(marker)
+"
+
+[node name="BasicArena" type="Node2D"]
+script = SubResource("1")
+
+[node name="TileMap" type="TileMap" parent="."]
+tile_set = ExtResource("1")
+cell_quadrant_size = 16
+format = 2
+
+[node name="HazardsLayer" type="TileMap" parent="."]
+tile_set = ExtResource("1")
+cell_quadrant_size = 16
+format = 2
+layer_1/name = "Hazards"
+layer_1/enabled = true
+layer_1/modulate = Color(1, 1, 1, 1)
+layer_1/y_sort_enabled = false
+layer_1/y_sort_origin = 0
+layer_1/z_index = 1
+
+[node name="SpawnMarkers" type="Node2D" parent="."]
+
+[node name="Camera2D" type="Camera2D" parent="."]
+zoom = Vector2(0.75, 0.75) 

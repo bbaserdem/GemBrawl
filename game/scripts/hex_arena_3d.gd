@@ -8,6 +8,11 @@ extends Node3D
 @export var hex_size: float = 1.0
 @export var hazard_count: int = 10
 
+## Tile configuration
+@export var tile_thickness: float = 0.5  # Height of tile blocks
+@export var height_noise_amount: float = 0.05  # Random height variation
+@export var hazard_height_offset: float = 0.1  # Height offset for hazards
+
 ## Visual settings
 @export var floor_material: StandardMaterial3D
 @export var hazard_material: StandardMaterial3D
@@ -41,22 +46,23 @@ func _create_hex_mesh() -> void:
 	var arrays = []
 	arrays.resize(Mesh.ARRAY_MAX)
 	
-	# Create vertices for pointy-top hexagon
+	# Create vertices for pointy-top hexagon prism
 	var vertices = PackedVector3Array()
 	var uvs = PackedVector2Array()
 	var normals = PackedVector3Array()
 	
+	# Top face
 	# Center vertex
-	vertices.push_back(Vector3.ZERO)
+	vertices.push_back(Vector3(0, tile_thickness/2, 0))
 	uvs.push_back(Vector2(0.5, 0.5))
 	normals.push_back(Vector3.UP)
 	
-	# Outer vertices (6 points)
+	# Outer vertices (6 points) - top face
 	for i in range(6):
 		var angle = (PI / 3.0) * i - PI / 6.0  # Start at top point
 		var x = hex_size * cos(angle)
 		var z = hex_size * sin(angle)
-		vertices.push_back(Vector3(x, 0, z))
+		vertices.push_back(Vector3(x, tile_thickness/2, z))
 		
 		# UV coordinates
 		var u = 0.5 + 0.5 * cos(angle)
@@ -99,9 +105,16 @@ func generate_arena() -> void:
 	
 	# Create mesh instances for each hex
 	for hex_coord in hexes:
+		# Create a static body for collision
+		var static_body = StaticBody3D.new()
+		var base_pos = HexGrid3D.hex_to_world_3d(hex_coord)
+		# Add random height variation
+		var height_offset = randf_range(-height_noise_amount, height_noise_amount)
+		static_body.position = base_pos + Vector3(0, height_offset, 0)
+		
+		# Add mesh instance as child of static body
 		var mesh_instance = MeshInstance3D.new()
 		mesh_instance.mesh = hex_mesh
-		mesh_instance.position = HexGrid3D.hex_to_world_3d(hex_coord)
 		
 		# Apply material
 		if floor_material:
@@ -112,11 +125,16 @@ func generate_arena() -> void:
 			mat.albedo_color = Color(0.3, 0.3, 0.3)
 			mesh_instance.material_override = mat
 		
-		add_child(mesh_instance)
-		floor_tiles[hex_coord] = mesh_instance
+		# Add collision shape
+		var collision_shape = CollisionShape3D.new()
+		collision_shape.shape = _create_hex_collision_shape()
+		# Position collision shape to match the tile thickness
+		collision_shape.position.y = tile_thickness / 2
 		
-		# Add to navigation mesh (future feature)
-		# Add collision (future feature)
+		static_body.add_child(mesh_instance)
+		static_body.add_child(collision_shape)
+		add_child(static_body)
+		floor_tiles[hex_coord] = static_body
 
 ## Generate hazards on the arena
 func generate_hazards() -> void:
@@ -142,10 +160,15 @@ func generate_hazards() -> void:
 			
 			# Check if not already occupied
 			if not hazard_tiles.has(hex_coord):
+				# Create static body for hazard collision
+				var hazard_body = StaticBody3D.new()
+				var base_pos = HexGrid3D.hex_to_world_3d(hex_coord)
+				# Add hazard height offset - smaller to not block movement
+				hazard_body.position = base_pos + Vector3(0, hazard_height_offset, 0)
+				
+				# Add mesh
 				var hazard_mesh = MeshInstance3D.new()
 				hazard_mesh.mesh = hex_mesh
-				hazard_mesh.position = HexGrid3D.hex_to_world_3d(hex_coord)
-				hazard_mesh.position.y = 0.2  # Raised above floor for better visibility
 				
 				# Apply hazard material
 				if hazard_material:
@@ -158,8 +181,16 @@ func generate_hazards() -> void:
 					mat.emission_energy = 0.5
 					hazard_mesh.material_override = mat
 				
-				add_child(hazard_mesh)
-				hazard_tiles[hex_coord] = hazard_mesh
+				# Add collision shape
+				var collision_shape = CollisionShape3D.new()
+				collision_shape.shape = _create_hex_collision_shape()
+				# Position collision shape to match the tile thickness
+				collision_shape.position.y = tile_thickness / 2
+				
+				hazard_body.add_child(hazard_mesh)
+				hazard_body.add_child(collision_shape)
+				add_child(hazard_body)
+				hazard_tiles[hex_coord] = hazard_body
 				placed += 1
 
 ## Generate spawn points for players
@@ -206,6 +237,14 @@ func get_random_spawn_position() -> Vector3:
 ## Check if a hex coordinate is valid (within arena)
 func is_valid_hex(hex_coord: Vector2i) -> bool:
 	return floor_tiles.has(hex_coord)
+
+## Create a collision shape for hex tiles
+func _create_hex_collision_shape() -> Shape3D:
+	# Create a simple box shape for now
+	# In a real implementation, you'd want a proper hexagonal prism
+	var box_shape = BoxShape3D.new()
+	box_shape.size = Vector3(hex_size * 1.5, tile_thickness, hex_size * 1.5)
+	return box_shape
 
 ## Check if a hex coordinate has a hazard
 func is_hazard_hex(hex_coord: Vector2i) -> bool:

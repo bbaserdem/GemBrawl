@@ -47,13 +47,16 @@ offset_bottom = 200.0
 text = "3D Hexagonal Arena - Isometric View
 
 Movement:
-• WASD/Arrows/Left Stick - Move player
+• WASD/Arrows/Left Stick - Move player (camera-relative)
+• R2/Space - Jump
 
 Camera Controls:
 • Right Stick Up/Down - Zoom in/out
-• Right Stick Left/Right - Tilt camera
+• Right Stick Left/Right - Rotate camera
+• L1/R1 - Tilt camera up/down
 • R3 (Right Stick Press) - Toggle camera mode
 • Page Up/Down - Tilt camera (keyboard)
+• Q/E - Rotate camera (keyboard)
 • Mouse Wheel - Zoom
 • Middle Mouse - Pan
 
@@ -61,4 +64,4 @@ Camera Modes:
 • Follow Player - Camera follows player
 • Static - Camera centered on arena
 
-Space/A Button - Use skill (not implemented)"
+A Button - Use skill (not implemented)"

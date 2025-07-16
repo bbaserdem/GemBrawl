@@ -14,6 +14,13 @@ extends CharacterBody3D
 @export var friction: float = 10.0
 @export var rotation_speed: float = 10.0
 
+## Jump and gravity settings
+@export var jump_force: float = 10.0
+@export var gravity: float = 20.0
+@export var max_fall_speed: float = 30.0
+@export var ground_height: float = 0.5  # Default ground level
+@export var step_height: float = 0.3  # Maximum height the player can step up
+
 ## Hex movement
 @export var snap_to_hex: bool = false  # Whether to snap to hex centers
 @export var hex_move_time: float = 0.2  # Time to move between hexes
@@ -47,6 +54,10 @@ signal hex_entered(hex_coord: Vector2i)
 @onready var collision_shape: CollisionShape3D = $CollisionShape3D
 
 func _ready() -> void:
+	# Configure floor stepping
+	floor_snap_length = step_height
+	floor_max_angle = deg_to_rad(45)  # Allow walking up 45 degree slopes
+	
 	# Find arena in scene
 	arena = get_node_or_null("/root/Main/HexArena3D")
 	
@@ -63,8 +74,9 @@ func _ready() -> void:
 	# Initialize hex position
 	_update_current_hex()
 	
-	# Ensure player starts at correct height
-	global_position.y = 0.5
+	# Set initial height - will be adjusted by gravity/collision
+	if global_position.y < ground_height:
+		global_position.y = ground_height
 
 func _physics_process(delta: float) -> void:
 	if not is_local_player or not is_alive:
@@ -86,31 +98,51 @@ func _handle_free_movement(delta: float) -> void:
 	# Get input vector
 	var input_vector = _get_movement_input()
 	
+	# Apply gravity
+	if not is_on_floor():
+		velocity.y -= gravity * delta
+		velocity.y = max(velocity.y, -max_fall_speed)
+	
+	# Handle jumping
+	if is_on_floor() and Input.is_action_just_pressed("jump"):
+		velocity.y = jump_force
+	
 	if input_vector.length() > 0:
-		# Convert 2D input to 3D movement (fixed world directions)
-		# Right = +X, Down = +Z (standard for top-down view)
-		var movement_direction = Vector3(input_vector.x, 0, input_vector.y)
+		# Get camera rotation for camera-relative movement
+		var camera = get_viewport().get_camera_3d()
+		var camera_transform = camera.get_global_transform()
 		
-		# Apply movement
-		velocity = velocity.move_toward(movement_direction * movement_speed, acceleration * delta)
+		# Get camera forward and right vectors (projected on XZ plane)
+		var cam_forward = -camera_transform.basis.z
+		cam_forward.y = 0
+		cam_forward = cam_forward.normalized()
+		
+		var cam_right = camera_transform.basis.x
+		cam_right.y = 0
+		cam_right = cam_right.normalized()
+		
+		# Convert 2D input to 3D movement relative to camera
+		var movement_direction = cam_forward * -input_vector.y + cam_right * input_vector.x
+		
+		# Apply horizontal movement
+		var horizontal_velocity = Vector3(velocity.x, 0, velocity.z)
+		horizontal_velocity = horizontal_velocity.move_toward(movement_direction * movement_speed, acceleration * delta)
+		velocity.x = horizontal_velocity.x
+		velocity.z = horizontal_velocity.z
 		
 		# Rotate to face movement direction
-		if velocity.length() > 0.1:
-			var look_direction = velocity.normalized()
+		if horizontal_velocity.length() > 0.1:
+			var look_direction = horizontal_velocity.normalized()
 			var target_rotation = atan2(look_direction.x, look_direction.z)
 			rotation.y = lerp_angle(rotation.y, target_rotation, rotation_speed * delta)
 	else:
-		# Apply friction
-		velocity = velocity.move_toward(Vector3.ZERO, friction * delta)
-	
-	# Keep player at fixed height (no gravity needed for isometric view)
-	velocity.y = 0
+		# Apply friction to horizontal movement only
+		var horizontal_velocity = Vector3(velocity.x, 0, velocity.z)
+		horizontal_velocity = horizontal_velocity.move_toward(Vector3.ZERO, friction * delta)
+		velocity.x = horizontal_velocity.x
+		velocity.z = horizontal_velocity.z
 	
 	move_and_slide()
-	
-	# Ensure player stays at correct height
-	if global_position.y != 0.5:
-		global_position.y = 0.5
 	
 	# Update current hex position
 	var new_hex = HexGrid3D.world_to_hex_3d(global_position)
@@ -120,6 +152,15 @@ func _handle_free_movement(delta: float) -> void:
 
 ## Handle hex-snapped movement
 func _handle_hex_movement(delta: float) -> void:
+	# Apply gravity regardless of hex movement
+	if not is_on_floor():
+		velocity.y -= gravity * delta
+		velocity.y = max(velocity.y, -max_fall_speed)
+	
+	# Handle jumping
+	if is_on_floor() and Input.is_action_just_pressed("jump"):
+		velocity.y = jump_force
+		
 	if not is_moving_to_hex:
 		# Get input and determine target hex
 		var input_vector = _get_movement_input()
@@ -155,14 +196,19 @@ func _handle_hex_movement(delta: float) -> void:
 		# Interpolate position
 		var start_pos = HexGrid3D.hex_to_world_3d(current_hex)
 		var end_pos = HexGrid3D.hex_to_world_3d(target_hex)
-		global_position = start_pos.lerp(end_pos, hex_move_progress)
-		global_position.y = 0.5  # Keep player above ground
+		var interpolated_pos = start_pos.lerp(end_pos, hex_move_progress)
+		global_position.x = interpolated_pos.x
+		global_position.z = interpolated_pos.z
+		# Let gravity handle Y position
 		
 		# Face movement direction
 		if hex_move_progress < 0.5:
 			var look_dir = (end_pos - start_pos).normalized()
 			var target_rotation = atan2(look_dir.x, look_dir.z)
 			rotation.y = lerp_angle(rotation.y, target_rotation, rotation_speed * delta)
+	
+	# Always apply physics to handle collisions and gravity
+	move_and_slide()
 
 ## Get movement input from player
 func _get_movement_input() -> Vector2:
@@ -246,7 +292,7 @@ func use_skill() -> void:
 ## Respawn the player at a given position
 func respawn(spawn_position: Vector3) -> void:
 	global_position = spawn_position
-	global_position.y = 0.5  # Ensure correct height
+	velocity = Vector3.ZERO  # Reset velocity on respawn
 	is_alive = true
 	gem_data.current_health = gem_data.max_health
 	health_changed.emit(gem_data.current_health, gem_data.max_health)
@@ -257,5 +303,6 @@ func respawn(spawn_position: Vector3) -> void:
 func set_hex_position(hex_coord: Vector2i) -> void:
 	current_hex = hex_coord
 	target_hex = hex_coord
-	global_position = HexGrid3D.hex_to_world_3d(hex_coord)
-	global_position.y = 0.5  # Player height 
+	var hex_pos = HexGrid3D.hex_to_world_3d(hex_coord)
+	global_position = hex_pos
+	global_position.y = max(hex_pos.y + ground_height, global_position.y)  # Ensure above ground 

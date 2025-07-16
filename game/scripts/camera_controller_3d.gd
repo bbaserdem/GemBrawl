@@ -9,10 +9,10 @@ extends Node3D
 @export var look_at_offset: Vector3 = Vector3.ZERO
 
 ## Tilt settings
-@export var tilt_angle: float = 45.0  # Degrees
+@export var tilt_angle: float  # Degrees - will be set from initial rotation
 @export var min_tilt: float = 15.0
 @export var max_tilt: float = 75.0
-@export var tilt_speed: float = 30.0  # Degrees per second
+@export var tilt_speed: float = 60.0  # Increased from 30 for more noticeable effect
 
 ## Zoom settings
 @export var zoom_speed: float = 0.5  # Reduced for finer control
@@ -26,7 +26,8 @@ extends Node3D
 
 ## Rotation settings
 @export var rotation_speed: float = 90.0  # Degrees per second
-@export var enable_rotation: bool = false  # Disabled for isometric view
+@export var enable_rotation: bool = true  # Enable rotation for better control
+var current_rotation: float = 0.0  # Current rotation angle in degrees
 
 ## Follow settings
 @export var follow_target: Node3D
@@ -47,10 +48,25 @@ var current_zoom: float
 var is_panning: bool = false
 var pan_start_pos: Vector2
 var pan_start_cam_pos: Vector3
+var initial_pivot_rotation: Vector3  # Store initial rotation
+var initial_tilt_degrees: float  # Store initial tilt in degrees
+var is_initialized: bool = false  # Track initialization state
+var current_tilt: float  # Actual rendered tilt (smoothly interpolated)
 
 func _ready() -> void:
 	# Initialize camera position
 	current_zoom = camera_distance
+	
+	# Store initial pivot rotation
+	if camera_pivot:
+		initial_pivot_rotation = camera_pivot.rotation
+		# Calculate the initial tilt angle from the rotation
+		initial_tilt_degrees = -rad_to_deg(initial_pivot_rotation.x)
+		# Set our tilt angle to match the initial rotation
+		tilt_angle = initial_tilt_degrees
+		current_tilt = tilt_angle  # Initialize current tilt
+	
+	is_initialized = true
 	_update_camera_position()
 	
 	# Set up input
@@ -70,6 +86,12 @@ func _process(delta: float) -> void:
 	# Handle continuous input (keyboard and gamepad camera control)
 	_handle_keyboard_input(delta)
 	_handle_gamepad_camera(delta)
+	
+	# Smoothly interpolate tilt
+	if is_initialized and abs(current_tilt - tilt_angle) > 0.01:
+		var old_current = current_tilt
+		current_tilt = lerp(current_tilt, tilt_angle, 10.0 * delta)
+		_update_camera_position()
 	
 	# Handle edge panning
 	if enable_edge_pan:
@@ -94,12 +116,6 @@ func _process(delta: float) -> void:
 				global_position = global_position.lerp(target_pos, follow_smoothness * delta)
 
 func _unhandled_input(event: InputEvent) -> void:
-	# Camera tilt (Page Up/Down only - removed R1/R2)
-	if event.is_action_pressed("ui_page_up"):
-		_adjust_tilt(-tilt_speed / 10.0)
-	elif event.is_action_pressed("ui_page_down"):
-		_adjust_tilt(tilt_speed / 10.0)
-	
 	# Toggle camera mode with R3 (right stick press)
 	if event is InputEventJoypadButton:
 		if event.button_index == JOY_BUTTON_RIGHT_STICK and event.pressed:
@@ -139,6 +155,8 @@ func _handle_keyboard_input(delta: float) -> void:
 		elif Input.is_action_pressed("rotate_camera_right"):
 			rotation.y -= deg_to_rad(rotation_speed * delta)
 
+## Gamepad functions
+
 func _handle_gamepad_camera(delta: float) -> void:
 	# Right stick camera controls
 	if Input.get_connected_joypads().size() > 0:
@@ -153,11 +171,18 @@ func _handle_gamepad_camera(delta: float) -> void:
 		
 		# Right stick Y-axis: Zoom (up = zoom in, down = zoom out)
 		if right_stick_y != 0:
-			_adjust_zoom(-zoom_speed * right_stick_y)  # Negative for intuitive control
+			_adjust_zoom(zoom_speed * right_stick_y)  # Positive for intuitive control (up = negative axis = zoom in)
 		
-		# Right stick X-axis: Camera tilt (left = tilt up, right = tilt down)
-		if right_stick_x != 0:
-			_adjust_tilt(tilt_speed * right_stick_x * delta)
+		# Right stick X-axis: Rotate camera around scene
+		if right_stick_x != 0 and enable_rotation:
+			current_rotation += rotation_speed * right_stick_x * delta
+			_update_camera_position()
+		
+		# Handle camera tilt with L1/R1
+		if Input.is_action_pressed("tilt_camera_up"):
+			_adjust_tilt(tilt_speed * delta)
+		elif Input.is_action_pressed("tilt_camera_down"):
+			_adjust_tilt(-tilt_speed * delta)
 
 func _handle_edge_pan(delta: float) -> void:
 	var viewport = get_viewport()
@@ -184,19 +209,26 @@ func _handle_edge_pan(delta: float) -> void:
 		global_position += pan_dir * pan_speed * delta
 
 func _adjust_tilt(delta_tilt: float) -> void:
+	# Simply update the target tilt angle - smoothing happens in _process
 	tilt_angle = clamp(tilt_angle + delta_tilt, min_tilt, max_tilt)
-	_update_camera_position()
 
 func _adjust_zoom(delta_zoom: float) -> void:
 	current_zoom = clamp(current_zoom + delta_zoom, min_zoom, max_zoom)
 	_update_camera_position()
 
 func _update_camera_position() -> void:
-	if not camera_pivot or not camera:
+	if not is_initialized or not camera_pivot or not camera:
 		return
 	
-	# Update pivot tilt
-	camera_pivot.rotation.x = -deg_to_rad(tilt_angle)
+	# Update camera rotation around Y axis
+	rotation.y = deg_to_rad(current_rotation)
+	
+	# Update pivot tilt - use negative because rotation.x is inverted in Godot
+	var target_rotation = -deg_to_rad(current_tilt)
+	camera_pivot.rotation.x = target_rotation  # Use interpolated tilt
+	# Preserve Y and Z rotations from initial setup
+	camera_pivot.rotation.y = initial_pivot_rotation.y
+	camera_pivot.rotation.z = initial_pivot_rotation.z
 	
 	# Update camera distance
 	camera.position = Vector3(0, 0, current_zoom)

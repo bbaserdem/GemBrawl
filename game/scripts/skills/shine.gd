@@ -1,5 +1,10 @@
 ## Shine skill implementation for GemBrawl
 ## Creates a radiant burst that damages all nearby enemies
+##
+## WARNING: This skill implementation contains legacy 2D references
+## and needs to be updated for 3D gameplay. Vector2 types should be
+## changed to Vector3, and Node2D references should be Node3D.
+## This will be addressed when implementing Task 6 or Task 20.
 class_name ShineSkill
 extends Skill
 

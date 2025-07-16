@@ -117,7 +117,94 @@
           4
         ],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Integrate Player Health System with Gem Stats",
+            "description": "Implement the player health system that interacts with the existing Gem class to manage health based on gem stats.",
+            "dependencies": [],
+            "details": "Create a player.gd script that retrieves health values from the Gem class and updates the player's health accordingly.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Develop Damage Calculation System",
+            "description": "Create a system to calculate damage dealt to players, taking into account their defense stats.",
+            "dependencies": [
+              1
+            ],
+            "details": "Implement a function that calculates damage based on the attacker's damage and the defender's defense values.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Implement Combat Collision Detection",
+            "description": "Set up collision detection for combat interactions between players and their attacks.",
+            "dependencies": [
+              2
+            ],
+            "details": "Use Godot's collision detection features to determine when attacks hit players and trigger damage calculations.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Handle Death State",
+            "description": "Implement logic to manage the player's state when health reaches zero, including triggering death animations.",
+            "dependencies": [
+              3
+            ],
+            "details": "Modify the player.gd script to handle the transition to a death state and notify other systems of the player's death.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Create Respawn System with Spawn Points",
+            "description": "Develop a respawn system that allows players to respawn at designated spawn points after dying.",
+            "dependencies": [
+              4
+            ],
+            "details": "Implement a respawn function that resets the player's health and position to a predefined spawn point.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Design Health UI",
+            "description": "Create a user interface to display the player's health, including a health bar and damage numbers.",
+            "dependencies": [
+              5
+            ],
+            "details": "Use Godot's UI system to design and implement a health bar that visually represents the player's current health.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 7,
+            "title": "Implement Combat Feedback",
+            "description": "Add visual effects and sounds to enhance the combat experience, providing feedback on hits and damage.",
+            "dependencies": [
+              6
+            ],
+            "details": "Integrate particle effects and sound effects that trigger during combat interactions to improve player feedback.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 8,
+            "title": "Establish Testing Framework for Combat",
+            "description": "Set up a testing framework to simulate combat scenarios and ensure all mechanics function correctly.",
+            "dependencies": [
+              7
+            ],
+            "details": "Create test cases that simulate various combat situations to validate health management, damage calculations, and respawn logic.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
       },
       {
         "id": 6,

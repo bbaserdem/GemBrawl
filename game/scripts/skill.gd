@@ -20,15 +20,15 @@ extends Node
 
 ## Skill state
 var is_active: bool = false
-var owner_player: Player
+var owner_player: Player3D
 
 ## Signals
 signal skill_started()
 signal skill_ended()
-signal hit_target(target: Node2D, damage: int)
+signal hit_target(target: Node3D, damage: int)
 
 ## Initialize the skill with its owner
-func setup(player: Player) -> void:
+func setup(player: Player3D) -> void:
 	owner_player = player
 
 ## Execute the skill - to be overridden by specific skills
@@ -59,23 +59,22 @@ func _end_skill() -> void:
 	skill_ended.emit()
 
 ## Check if a target is in range
-func is_target_in_range(target: Node2D) -> bool:
+func is_target_in_range(target: Node3D) -> bool:
 	if not owner_player:
 		return false
 	return owner_player.global_position.distance_to(target.global_position) <= range
 
 ## Apply damage to a target
-func apply_damage_to_target(target: Node2D, damage_multiplier: float = 1.0) -> void:
+func apply_damage_to_target(target: Node3D, damage_multiplier: float = 1.0) -> void:
 	if target.has_method("take_damage"):
 		var final_damage: int = int(damage * damage_multiplier)
 		target.take_damage(final_damage, owner_player)
 		hit_target.emit(target, final_damage)
 
 ## Create visual effect at position
-func create_effect(effect_position: Vector2) -> void:
+func create_effect(effect_position: Vector3) -> void:
 	if particle_scene:
-		var effect: Node2D = particle_scene.instantiate()
+		var effect: Node3D = particle_scene.instantiate()
 		get_tree().current_scene.add_child(effect)
 		effect.global_position = effect_position
-		if effect.has_property("modulate"):
-			effect.modulate = skill_color 
+		# Note: modulate property doesn't exist on Node3D - use material override instead 

@@ -25,6 +25,7 @@
       # Define script; these are going to be functionally aliases
       scripts = [
         (mkScript "tm" ''npx --yes --package=task-master-ai task-master "$@"'')
+        (mkScript "tm-ai" ''npx --yes --package=task-master-ai task-master-ai "$@"'')
       ];
     in {
       devShell = pkgs.mkShell {

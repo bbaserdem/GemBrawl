@@ -7,12 +7,15 @@ extends Resource
 @export var gem_name: String = ""
 @export var color: Color = Color.WHITE
 @export var texture: Texture2D
+@export var element: String = ""  # Gem element type (ruby, sapphire, emerald, etc.)
 
 ## Combat stats
 @export var max_health: int = 100
 @export var current_health: int = 100
 @export var base_damage: int = 10
-@export var defense: int = 5
+@export var defense: int = 5  # Physical defense
+@export var magic_resistance: int = 10  # Magical defense (as percentage)
+@export var crit_chance_bonus: float = 0.0  # Additional crit chance
 
 ## Movement properties
 @export var movement_speed: float = 300.0
@@ -28,8 +31,10 @@ func _init() -> void:
 
 ## Take damage and return true if gem is defeated
 func take_damage(damage: int) -> bool:
-	var actual_damage: int = max(0, damage - defense)
-	current_health -= actual_damage
+	# Damage has already been calculated with defenses by DamageSystem
+	# Don't apply defense again!
+	current_health -= damage
+	current_health = max(0, current_health)  # Prevent negative health
 	return current_health <= 0
 
 ## Heal the gem

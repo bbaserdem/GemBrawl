@@ -116,15 +116,15 @@
           3,
           4
         ],
-        "status": "pending",
+        "status": "in-progress",
         "subtasks": [
           {
             "id": 1,
             "title": "Integrate Player Health System with Gem Stats",
             "description": "Implement the player health system that interacts with the existing Gem class to manage health based on gem stats.",
             "dependencies": [],
-            "details": "Create a player.gd script that retrieves health values from the Gem class and updates the player's health accordingly.",
-            "status": "pending",
+            "details": "Create a player.gd script that retrieves health values from the Gem class and updates the player's health accordingly.\n<info added on 2025-07-16T17:43:11.651Z>\nEnhance the player health system by integrating a lives system that transitions the player to a spectator mode when lives are depleted. Implement combat state management to handle transitions between active combat, invincibility frames, and spectator mode.\n</info added on 2025-07-16T17:43:11.651Z>\n<info added on 2025-07-16T17:51:42.469Z>\nCreated a test scene (test_combat.tscn) and test controller to verify combat mechanics, including a player with a 3 lives system, invulnerability periods with visual feedback, spectator mode when all lives are depleted, and a respawn system using spawn point nodes. The scene features a debug UI showing health, lives, and status, with test controls for damage, instant kill, and manual respawn. The arena includes 4 spawn points, a debug panel for real-time status updates, and player signals connected for various events.\n</info added on 2025-07-16T17:51:42.469Z>\n<info added on 2025-07-16T18:17:37.638Z>\nFixed test scene issues by adding green semi-transparent spheres as spawn point visual indicators and a red prism direction indicator arrow above the player. Adjusted player physics settings for improved ground adhesion. Confirmed the blue capsule matches the gem color in test_gem.tres. Movement adjustments include ensuring WASD/Arrow keys move the player relative to the camera view, maintaining player position on the ground plane, and aligning the arrow with the player's facing direction. Green spheres mark spawn points at the corners.\n</info added on 2025-07-16T18:17:37.638Z>\n<info added on 2025-07-16T20:24:34.822Z>\nFixed critical issues:\n1. Resolved negative HP issue by adding max(0, current_health) in Gem.take_damage() to prevent health values from dropping below zero.\n2. Addressed movement issue by replacing the complex camera controller with a simple follow camera, eliminating input conflicts that previously hindered player movement. The simple camera now follows the player without handling inputs, ensuring proper movement with WASD/arrow keys.\n</info added on 2025-07-16T20:24:34.822Z>",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -134,8 +134,8 @@
             "dependencies": [
               1
             ],
-            "details": "Implement a function that calculates damage based on the attacker's damage and the defender's defense values.",
-            "status": "pending",
+            "details": "Implement a function that calculates damage based on the attacker's damage and the defender's defense values.\n<info added on 2025-07-16T20:33:40.068Z>\nPlanning damage calculation system implementation:\n- Create a comprehensive damage system that supports different damage types and modifiers\n- Implement damage type enum (Physical, Magical, True damage)\n- Add support for critical hits, damage multipliers, and resistance\n- Create a DamageInfo class to pass damage details between systems\n- Integrate with existing gem defense stats\n- Support for damage over time (DoT) effects\n- Add damage source tracking for combat logs\n</info added on 2025-07-16T20:33:40.068Z>\n<info added on 2025-07-16T20:37:09.542Z>\nImplemented comprehensive damage calculation system:\n- Created DamageSystem class with DamageInfo for tracking damage details\n- Implemented damage types: Physical, Magical, True, and Elemental\n- Physical damage reduced by flat defense value\n- Magical damage reduced by percentage (magic resistance)\n- True damage bypasses all defenses\n- Elemental damage includes type effectiveness (Ruby > Sapphire > Emerald > Ruby)\n- Critical hit system with 10% base chance (15% for skills)\n- Damage multiplier support\n- Added magic_resistance and crit_chance_bonus to Gem class\n- Updated Player3D with take_damage_info() and get_defense_against() methods\n- Updated Skill base class with apply_damage_info() method\n- Created test implementation that cycles through damage types on spacebar\n\nSystem is ready for testing different damage calculations.\n</info added on 2025-07-16T20:37:09.542Z>",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -145,8 +145,8 @@
             "dependencies": [
               2
             ],
-            "details": "Use Godot's collision detection features to determine when attacks hit players and trigger damage calculations.",
-            "status": "pending",
+            "details": "Use Godot's collision detection features to determine when attacks hit players and trigger damage calculations.\n<info added on 2025-07-16T20:39:58.437Z>\nPlanning combat collision detection implementation based on user requirements:\n- Area3D nodes for melee hitboxes (active only during attack animations)\n- Raycasts for ranged attacks\n- KinematicBody/Area3D for moving projectiles\n- Single time-limited overlap checks for AoE attacks\n- PhysicsBody3D + CollisionShape3D for character bodies (enables knockback)\n\nWill implement:\n1. Hitbox system for melee attacks\n2. Projectile system for ranged attacks\n3. AoE attack system with overlap detection\n4. Combat layers and masks for proper collision filtering\n</info added on 2025-07-16T20:39:58.437Z>\n<info added on 2025-07-16T20:49:42.691Z>\nImplementation completed:\n1. Created CombatLayers system for collision layer management\n2. Implemented MeleeHitbox class for Area3D-based melee attacks\n3. Created Projectile system for ranged attacks with CharacterBody3D\n4. Developed AoeAttack system with sphere/cone/line/ring shapes\n5. Built CombatManager singleton for global combat state\n6. Updated Player3D to use proper collision layers\n\nAll collision detection systems are now in place:\n- Melee: Area3D nodes with timed activation\n- Ranged: Both raycast (not implemented yet) and projectile systems\n- AoE: Single time-limited overlap checks with various shapes\n- Proper collision filtering through layer/mask system\n</info added on 2025-07-16T20:49:42.691Z>",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -480,7 +480,7 @@
     ],
     "metadata": {
       "created": "2025-07-15T18:49:15.591Z",
-      "updated": "2025-07-15T21:25:05.309Z",
+      "updated": "2025-07-17T16:13:11.201Z",
       "description": "Tasks for master context"
     }
   }

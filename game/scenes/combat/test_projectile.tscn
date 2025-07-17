@@ -1,0 +1,37 @@
+[gd_scene load_steps=6 format=3 uid="uid://test_projectile"]
+
+[ext_resource type="Script" path="res://scripts/combat/projectile.gd" id="1"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_1"]
+radius = 0.2
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
+albedo_color = Color(0, 0.5, 1, 1)
+emission_enabled = true
+emission = Color(0, 0.5, 1, 0.5)
+
+[sub_resource type="SphereMesh" id="SphereMesh_1"]
+material = SubResource("StandardMaterial3D_1")
+radius = 0.2
+height = 0.4
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_2"]
+radius = 0.3
+
+[node name="TestProjectile" type="CharacterBody3D"]
+script = ExtResource("1")
+speed = 20.0
+damage = 25
+damage_type = 1
+lifetime = 3.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_1")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_1")
+
+[node name="Hitbox" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hitbox"]
+shape = SubResource("SphereShape3D_2") 

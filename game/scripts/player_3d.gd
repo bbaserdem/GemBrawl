@@ -29,6 +29,9 @@ extends CharacterBody3D
 var is_alive: bool = true
 var invulnerable: bool = false
 var invulnerability_duration: float = 0.5
+var current_lives: int = 3
+var max_lives: int = 3
+var is_spectator: bool = false
 
 ## Skill state
 var skill_ready: bool = true
@@ -48,15 +51,26 @@ signal health_changed(new_health: int, max_health: int)
 signal defeated()
 signal skill_used()
 signal hex_entered(hex_coord: Vector2i)
+signal lives_changed(new_lives: int, max_lives: int)
+signal became_spectator()
+signal respawning(time_until_respawn: float)
+signal damage_dealt(damage_info: DamageSystem.DamageInfo)
+signal damage_received(damage_info: DamageSystem.DamageInfo)
 
 ## Visual nodes
 @onready var mesh_instance: MeshInstance3D = $MeshInstance3D
 @onready var collision_shape: CollisionShape3D = $CollisionShape3D
+@onready var direction_indicator: Node3D = $DirectionArrow
 
 func _ready() -> void:
 	# Configure floor stepping
+	floor_stop_on_slope = true
+	floor_block_on_wall = true
 	floor_snap_length = step_height
 	floor_max_angle = deg_to_rad(45)  # Allow walking up 45 degree slopes
+	
+	# Set up collision layers for combat
+	CombatLayers.setup_combat_body(self, CombatLayers.Layer.PLAYER)
 	
 	# Find arena in scene
 	arena = get_node_or_null("/root/Main/HexArena3D")
@@ -77,9 +91,20 @@ func _ready() -> void:
 	# Set initial height - will be adjusted by gravity/collision
 	if global_position.y < ground_height:
 		global_position.y = ground_height
+	
+	# Configure collision layers
+	CombatLayers.setup_combat_body(self, CombatLayers.Layer.PLAYER)
+	
+	# Add to players group for easy access
+	add_to_group("players")
 
 func _physics_process(delta: float) -> void:
-	if not is_local_player or not is_alive:
+	if not is_local_player or (not is_alive and not is_spectator):
+		return
+	
+	# Spectator mode - only allow camera movement
+	if is_spectator:
+		_handle_spectator_movement(delta)
 		return
 	
 	if snap_to_hex:
@@ -262,25 +287,142 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("use_skill") and skill_ready:
 		use_skill()
 
-## Take damage from an attack
+## Take damage from an attack (legacy method for simple damage)
 func take_damage(damage: int, attacker: Node3D = null) -> void:
-	if invulnerable or not is_alive:
+	if invulnerable or not is_alive or is_spectator:
 		return
 	
 	var is_defeated = gem_data.take_damage(damage)
 	health_changed.emit(gem_data.current_health, gem_data.max_health)
 	
 	if is_defeated:
-		is_alive = false
-		defeated.emit()
-		set_physics_process(false)
-		# TODO: Play death animation
-		queue_free()
+		_handle_defeat()
 	else:
-		# Trigger invulnerability
-		invulnerable = true
-		await get_tree().create_timer(invulnerability_duration).timeout
-		invulnerable = false
+		# Trigger invulnerability and visual feedback
+		_start_invulnerability()
+
+## Take damage using the new damage system
+func take_damage_info(damage_info: DamageSystem.DamageInfo) -> void:
+	if invulnerable or not is_alive or is_spectator:
+		damage_info.damage_dealt = 0
+		return
+	
+	# Apply damage through the damage system
+	DamageSystem.calculate_damage(damage_info)
+	print("Player ", name, " - Base: ", damage_info.base_damage, " Final: ", damage_info.damage_dealt)
+	
+	# Show damage number
+	if damage_info.damage_dealt > 0:
+		var damage_number_scene = preload("res://scenes/combat/damage_number.tscn")
+		var damage_number = damage_number_scene.instantiate()
+		get_tree().current_scene.add_child(damage_number)
+		damage_number.global_position = global_position + Vector3(0, 1.5, 0)
+		damage_number.setup(
+			damage_info.damage_dealt,
+			damage_info.damage_type,
+			damage_info.is_critical
+		)
+	
+	# Apply the calculated damage
+	var is_defeated = gem_data.take_damage(damage_info.damage_dealt)
+	health_changed.emit(gem_data.current_health, gem_data.max_health)
+	damage_received.emit(damage_info)
+	
+	if is_defeated:
+		_handle_defeat()
+	else:
+		# Trigger invulnerability and visual feedback
+		_start_invulnerability()
+
+## Get defense value against specific damage type
+func get_defense_against(damage_type: DamageSystem.DamageType) -> int:
+	if not gem_data:
+		return 0
+	
+	match damage_type:
+		DamageSystem.DamageType.PHYSICAL:
+			return gem_data.defense
+		DamageSystem.DamageType.MAGICAL:
+			return gem_data.magic_resistance
+		DamageSystem.DamageType.TRUE:
+			return 0  # True damage ignores defense
+		DamageSystem.DamageType.ELEMENTAL:
+			return gem_data.magic_resistance  # Use magic resist for elemental
+		_:
+			return 0
+
+## Get this player's element type
+func get_element() -> String:
+	if gem_data:
+		return gem_data.element
+	return ""
+
+## Handle player defeat
+func _handle_defeat() -> void:
+	is_alive = false
+	defeated.emit()
+	
+	# Decrease lives
+	current_lives -= 1
+	lives_changed.emit(current_lives, max_lives)
+	
+	if current_lives > 0:
+		# Start respawn process
+		_start_respawn_timer()
+	else:
+		# No more lives - become spectator
+		is_spectator = true
+		became_spectator.emit()
+		visible = false  # Hide the player model
+		collision_layer = 0  # Disable all collisions
+		collision_mask = 0
+
+## Start invulnerability period
+func _start_invulnerability(duration_override: float = -1.0) -> void:
+	invulnerable = true
+	var duration = duration_override if duration_override > 0 else invulnerability_duration
+	
+	# Visual feedback for invulnerability (flashing effect)
+	if mesh_instance and mesh_instance.material_override:
+		var material = mesh_instance.material_override
+		if material is StandardMaterial3D:
+			var tween = create_tween()
+			tween.set_loops(int(duration * 4))  # Flash 4 times per second
+			tween.tween_property(material, "albedo_color:a", 0.3, 0.125)
+			tween.tween_property(material, "albedo_color:a", 1.0, 0.125)
+	
+	await get_tree().create_timer(duration).timeout
+	invulnerable = false
+
+## Start respawn timer
+func _start_respawn_timer() -> void:
+	var respawn_delay: float = 3.0
+	respawning.emit(respawn_delay)
+	
+	# Hide player during respawn
+	visible = false
+	set_physics_process(false)
+	
+	# Countdown timer
+	for i in range(int(respawn_delay)):
+		await get_tree().create_timer(1.0).timeout
+		respawning.emit(respawn_delay - i - 1)
+	
+	# Find a spawn point and respawn
+	var spawn_point = _get_spawn_point()
+	if spawn_point:
+		respawn(spawn_point.global_position)
+
+## Get a suitable spawn point
+func _get_spawn_point() -> Node3D:
+	# Look for spawn points in the scene
+	var spawn_points = get_tree().get_nodes_in_group("spawn_points")
+	if spawn_points.is_empty():
+		push_warning("No spawn points found in scene!")
+		return null
+	
+	# Choose a random spawn point
+	return spawn_points[randi() % spawn_points.size()]
 
 ## Use the gem's special skill
 func use_skill() -> void:
@@ -294,10 +436,14 @@ func respawn(spawn_position: Vector3) -> void:
 	global_position = spawn_position
 	velocity = Vector3.ZERO  # Reset velocity on respawn
 	is_alive = true
+	visible = true
 	gem_data.current_health = gem_data.max_health
 	health_changed.emit(gem_data.current_health, gem_data.max_health)
 	set_physics_process(true)
 	_update_current_hex()
+	
+	# Grant spawn invulnerability (longer duration for respawn)
+	_start_invulnerability(2.0)
 
 ## Set position to a specific hex
 func set_hex_position(hex_coord: Vector2i) -> void:
@@ -305,4 +451,32 @@ func set_hex_position(hex_coord: Vector2i) -> void:
 	target_hex = hex_coord
 	var hex_pos = HexGrid3D.hex_to_world_3d(hex_coord)
 	global_position = hex_pos
-	global_position.y = max(hex_pos.y + ground_height, global_position.y)  # Ensure above ground 
+	global_position.y = max(hex_pos.y + ground_height, global_position.y)  # Ensure above ground
+
+## Handle spectator movement (free-fly camera)
+func _handle_spectator_movement(delta: float) -> void:
+	var input_vector = _get_movement_input()
+	
+	# Allow spectator to fly freely
+	var camera = get_viewport().get_camera_3d()
+	if camera:
+		var camera_transform = camera.get_global_transform()
+		
+		# Get camera vectors
+		var cam_forward = -camera_transform.basis.z
+		var cam_right = camera_transform.basis.x
+		var cam_up = camera_transform.basis.y
+		
+		# Convert input to 3D movement
+		var movement = Vector3.ZERO
+		movement += cam_forward * -input_vector.y
+		movement += cam_right * input_vector.x
+		
+		# Vertical movement
+		if Input.is_action_pressed("jump"):
+			movement += cam_up
+		if Input.is_action_pressed("crouch"):
+			movement -= cam_up
+		
+		# Apply movement
+		global_position += movement.normalized() * movement_speed * 2.0 * delta 

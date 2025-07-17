@@ -64,12 +64,34 @@ func is_target_in_range(target: Node3D) -> bool:
 		return false
 	return owner_player.global_position.distance_to(target.global_position) <= range
 
-## Apply damage to a target
+## Apply damage to a target (legacy method)
 func apply_damage_to_target(target: Node3D, damage_multiplier: float = 1.0) -> void:
 	if target.has_method("take_damage"):
 		var final_damage: int = int(damage * damage_multiplier)
 		target.take_damage(final_damage, owner_player)
 		hit_target.emit(target, final_damage)
+
+## Apply damage using the new damage system
+func apply_damage_info(target: Node3D, damage_type: DamageSystem.DamageType = DamageSystem.DamageType.PHYSICAL, 
+		damage_multiplier: float = 1.0) -> void:
+	if not target or not target.has_method("take_damage_info"):
+		return
+	
+	# Create damage info
+	var damage_info = DamageSystem.create_skill_damage(
+		owner_player,
+		target,
+		int(damage * damage_multiplier),
+		skill_name,
+		damage_type
+	)
+	
+	# Apply any additional multipliers from the skill
+	damage_info.multiplier = damage_multiplier
+	
+	# Apply damage
+	DamageSystem.apply_damage(damage_info)
+	hit_target.emit(target, damage_info.damage_dealt)
 
 ## Create visual effect at position
 func create_effect(effect_position: Vector3) -> void:

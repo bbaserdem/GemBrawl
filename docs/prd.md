@@ -60,6 +60,11 @@ Here is a structured, detailed **Product Requirements Document (PRD)** for your 
 * Upon reaching 0 HP:
 
   * Player dies and respawns (if lives remain)
+* **Fall Mechanic**:
+  * Players can be knocked off arena edges into fall zones
+  * Falling players take fall damage and respawn at their spawn point
+  * Fall damage can be lethal if it reduces HP to 0
+  * Fall damage is configurable per arena (shallow vs deep falls)
 * Game ends when only one player has lives remaining
 
 ### 📐 Geometry
@@ -102,6 +107,7 @@ Each gem has:
 * Menu options:
 
   * Practice
+  * Local Multiplayer
   * Open Room
   * Join Room
   * Settings
@@ -139,7 +145,30 @@ Each gem has:
 
 ---
 
-## 🌐 Multiplayer System
+## 🎮 Local Multiplayer System
+
+### 🎯 Controller Setup
+
+* Supports 2-4 players on one machine
+* Each player connects their own controller
+* Flow:
+  1. Player 1 (host) starts local multiplayer
+  2. Game detects available controllers
+  3. Players press any button to claim their controller
+  4. Shows controller assignment screen with player colors
+  5. Continue to arena and character selection
+
+### 🎮 Local Match Flow
+
+* Same character selection process as online
+* Same arena selection
+* All players share one screen with split-screen or shared camera
+* Uses same combat mechanics and rules as online matches
+* Winner determined by last player standing
+
+---
+
+## 🌐 Online Multiplayer System
 
 ### 🔓 Open Room
 
@@ -199,6 +228,8 @@ Each gem has:
 
 * Hex-tiled level
 * Obstacles and traps (spike traps, knockback zones, lava tiles)
+* **Fall zones** around arena perimeter with configurable fall damage
+* **Edge tiles** that can break or collapse when stepped on repeatedly
 
 ---
 
@@ -208,35 +239,6 @@ Each gem has:
 * Other players connect via LAN or direct IP
 * State sync: Player position, abilities used, damage dealt
 * Use **Godot high-level networking API (MultiplayerAPI + ENet)**
-
----
-
-## 📁 File Structure (Recommended)
-
-```
-game/
-├── project.godot
-├── main.tscn
-├── scenes/
-│   ├── launcher/
-│   ├── player/
-│   ├── arena/
-│   ├── ui/
-│   └── lobby/
-├── scripts/
-│   ├── gem.gd
-│   ├── player.gd
-│   ├── skill.gd (base)
-│   └── skills/
-│       ├── cut.gd
-│       ├── polish.gd
-│       └── shine.gd
-├── assets/
-│   ├── sprites/
-│   ├── tilesets/
-│   └── audio/
-└── networking/
-```
 
 ---
 

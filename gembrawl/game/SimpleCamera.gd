@@ -1,5 +1,6 @@
 ## Simple camera controller for testing
 ## Follows target without interfering with player input
+class_name SimpleCamera
 extends Node3D
 
 @export var follow_target: Node3D

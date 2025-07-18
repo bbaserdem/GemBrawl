@@ -1,5 +1,6 @@
 ## Visual indicator for AoE attacks
 ## Shows warning zone before damage
+class_name AoeVisual
 extends Node3D
 
 @export var color_warning: Color = Color(1, 0.5, 0, 0.5)  # Orange warning

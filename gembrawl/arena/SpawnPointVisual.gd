@@ -1,5 +1,6 @@
 ## Visual indicator for spawn points
 ## Adds a semi-transparent sphere to show spawn locations
+class_name SpawnPointVisual
 extends Marker3D
 
 func _ready() -> void:

@@ -27,7 +27,7 @@ res://
 │   │   ├─ HealthBar.tscn
 │   │   ├─ CooldownDisplay.tscn
 │   │   └─ LivesCounter.tscn
-│   ├─ UIManager.gd
+│   └─ UIManager.gd
 │
 ├─ game/
 │   ├─ MainGame.tscn
@@ -118,6 +118,10 @@ res://
 ├─ logs/
 │   ├─ DebugLog.gd
 │   └─ [match_logs].txt
+├─ tests/
+│   ├─ [TestXXX].tscn
+│   ├─ [TestXXX].gd
+│   └─ [featureToBeTested]/
 │
 ├─ main.gd
 └─ project.godot
@@ -193,6 +197,11 @@ res://
 ### **utils/**
 - **SaveLoad.gd**: Game settings or profile save/load logic.
 - **Helpers.gd**: Miscellaneous helper functions.
+
+### **tests/**
+- **TestXXX.gd**: Scripts used for testing
+- **TestXXX.tscn**: Scenes used for testing
+- **folder/**: Subfolder for organizing tested features mirroring the main project structure.
 
 ### **logs/**
 - **DebugLog.gd**: Logging utility for errors or analytic data.

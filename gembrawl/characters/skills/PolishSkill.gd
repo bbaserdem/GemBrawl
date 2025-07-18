@@ -1,10 +1,6 @@
 ## Polish skill implementation for GemBrawl
 ## Provides temporary invulnerability and healing
-##
-## WARNING: This skill implementation contains legacy 2D references
-## and needs to be updated for 3D gameplay. Vector2 types should be
-## changed to Vector3, and Node2D references should be Node3D.
-## This will be addressed when implementing Task 6 or Task 20.
+## Updated for 3D gameplay
 class_name PolishSkill
 extends Skill
 

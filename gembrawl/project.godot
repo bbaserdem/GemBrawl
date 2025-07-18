@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="GemBrawl"
-run/main_scene="res://scenes/hex_arena_3d_gameplay.tscn"
+run/main_scene="res://game/MainGame.tscn"
 config/features=PackedStringArray("4.3")
 config/icon="res://icon.png"
 

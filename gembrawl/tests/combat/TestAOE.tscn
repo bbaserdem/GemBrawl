@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://test_aoe"]
 
-[ext_resource type="Script" path="res://scripts/combat/aoe_attack.gd" id="1"]
+[ext_resource type="Script" path="res://characters/skills/AoeAttack.gd" id="1"]
 
 [node name="TestAoeAttack" type="Node3D"]
 script = ExtResource("1")

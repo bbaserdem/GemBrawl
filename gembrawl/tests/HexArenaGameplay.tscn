@@ -1,8 +1,8 @@
 [gd_scene load_steps=5 format=3 uid="uid://cppyt08pb3j8s"]
 
 [ext_resource type="PackedScene" path="res://arena/HexArena.tscn" id="1"]
-[ext_resource type="PackedScene" path="res://scenes/player/player_3d.tscn" id="2"]
-[ext_resource type="Script" path="res://scripts/camera_controller_3d.gd" id="3"]
+[ext_resource type="PackedScene" path="res://characters/PlayerCharacter.tscn" id="2"]
+[ext_resource type="Script" path="res://game/CameraController.gd" id="3"]
 
 [sub_resource type="Environment" id="1"]
 background_mode = 1

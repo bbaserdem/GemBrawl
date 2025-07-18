@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://tests/TestCombatCollisionController.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://bgf8yc6a3oy5h" path="res://tests/TestHex.tscn" id="2"]
-[ext_resource type="Script" path="res://scripts/camera_controller_3d.gd" id="3"]
+[ext_resource type="Script" path="res://game/CameraController.gd" id="3"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_1"]
 size = Vector3(50, 0.2, 50)

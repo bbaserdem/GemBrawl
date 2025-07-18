@@ -64,6 +64,30 @@ func is_target_in_range(target: Node3D) -> bool:
 		return false
 	return owner_player.global_position.distance_to(target.global_position) <= range
 
+## Check if a node can be targeted by this skill
+func _can_target(target: Node) -> bool:
+	if not target:
+		return false
+	
+	# Don't target self
+	if target == owner_player:
+		return false
+	
+	# Check if it's a valid targetable entity
+	if not target.has_method("take_damage"):
+		return false
+	
+	# Check if target is alive (if applicable)
+	if "is_alive" in target and not target.is_alive:
+		return false
+	
+	# Check team/faction if applicable
+	if "team" in target and "team" in owner_player:
+		if target.team == owner_player.team:
+			return false
+	
+	return true
+
 ## Apply damage to a target (legacy method)
 func apply_damage_to_target(target: Node3D, damage_multiplier: float = 1.0) -> void:
 	if target.has_method("take_damage"):

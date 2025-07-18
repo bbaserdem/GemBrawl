@@ -1,6 +1,6 @@
 ## Base skill class for all gem abilities in GemBrawl
 ## Provides common interface and functionality for skills
-class_name Skill
+class_name SkillBase
 extends Node
 
 ## Skill properties

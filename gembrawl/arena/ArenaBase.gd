@@ -1,6 +1,5 @@
-## HexArena - 3D hexagonal arena generator
+## ArenaBase - Base class for 3D arena generators
 ## Creates a hexagonal arena using MeshInstance3D nodes for proper 2.5D isometric view
-class_name HexArena
 extends Node3D
 
 ## Arena configuration

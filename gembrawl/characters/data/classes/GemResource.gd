@@ -1,6 +1,6 @@
-## Base Gem class for all gem types in GemBrawl
+## Base GemResource class for all gem types in GemBrawl
 ## This class defines the core attributes and behaviors shared by all gems
-class_name Gem
+class_name GemResource
 extends Resource
 
 ## Visual properties

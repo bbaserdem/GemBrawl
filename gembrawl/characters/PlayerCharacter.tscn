@@ -1,7 +1,11 @@
-[gd_scene load_steps=7 format=3 uid="uid://PlayerCharacter"]
+[gd_scene load_steps=11 format=3 uid="uid://PlayerCharacter"]
 
 [ext_resource type="Script" path="res://characters/PlayerCharacter.gd" id="1"]
 [ext_resource type="Resource" path="res://characters/data/test_gem.tres" id="2"]
+[ext_resource type="Script" path="res://characters/components/PlayerMovement.gd" id="3"]
+[ext_resource type="Script" path="res://characters/components/PlayerCombat.gd" id="4"]
+[ext_resource type="Script" path="res://characters/components/PlayerStats.gd" id="5"]
+[ext_resource type="Script" path="res://characters/components/PlayerInput.gd" id="6"]
 
 [sub_resource type="CapsuleMesh" id="1"]
 height = 1.0
@@ -38,4 +42,16 @@ omni_range = 2.0
 [node name="DirectionArrow" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0.3)
 mesh = SubResource("3")
-material_override = SubResource("4") 
+material_override = SubResource("4")
+
+[node name="Movement" type="Node" parent="."]
+script = ExtResource("3")
+
+[node name="Combat" type="Node" parent="."]
+script = ExtResource("4")
+
+[node name="Stats" type="Node" parent="."]
+script = ExtResource("5")
+
+[node name="Input" type="Node" parent="."]
+script = ExtResource("6") 

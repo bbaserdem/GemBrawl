@@ -1,10 +1,9 @@
-[gd_scene load_steps=13 format=3 uid="uid://bevrklvpiuccw"]
+[gd_scene load_steps=8 format=3 uid="uid://bevrklvpiuccw"]
 
-[ext_resource type="Script" path="res://scripts/player_3d.gd" id="1_p4n5x"]
-[ext_resource type="Resource" uid="uid://b0gso4ww407tb" path="res://resources/test_gem.tres" id="2_8qy7m"]
-[ext_resource type="Script" path="res://scripts/simple_camera_3d.gd" id="3_vy5kt"]
-[ext_resource type="Script" path="res://scripts/test_combat_controller.gd" id="4_t8cyn"]
-[ext_resource type="Script" path="res://scripts/spawn_point_visual.gd" id="5_spawn"]
+[ext_resource type="PackedScene" path="res://characters/PlayerCharacter.tscn" id="1_p4n5x"]
+[ext_resource type="Script" path="res://game/SimpleCamera.gd" id="3_vy5kt"]
+[ext_resource type="Script" path="res://tests/TestCombatController.gd" id="4_t8cyn"]
+[ext_resource type="Script" path="res://tests/SpawnPointVisual.gd" id="5_spawn"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
 albedo_color = Color(0.3, 0.7, 0.3, 1)
@@ -15,15 +14,6 @@ size = Vector3(40, 0.1, 40)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_1"]
 size = Vector3(40, 0.1, 40)
-
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2"]
-albedo_color = Color(1, 0, 0, 1)
-
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_1"]
-
-[sub_resource type="PrismMesh" id="PrismMesh_1"]
 
 [node name="TestCombat" type="Node3D"]
 script = ExtResource("4_t8cyn")
@@ -36,25 +26,8 @@ mesh = SubResource("BoxMesh_1")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
 shape = SubResource("BoxShape3D_1")
 
-[node name="Player" type="CharacterBody3D" parent="."]
+[node name="Player" parent="." instance=ExtResource("1_p4n5x")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
-script = ExtResource("1_p4n5x")
-gem_data = ExtResource("2_8qy7m")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
-shape = SubResource("CapsuleShape3D_1")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Player"]
-material_override = SubResource("StandardMaterial3D_2")
-mesh = SubResource("CapsuleMesh_1")
-
-[node name="DirectionIndicator" type="Node3D" parent="Player"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
-
-[node name="Arrow" type="MeshInstance3D" parent="Player/DirectionIndicator"]
-transform = Transform3D(0.3, 0, 0, 0, -1.31134e-08, -0.3, 0, 0.5, -7.86805e-09, 0, 0, 0.5)
-material_override = SubResource("StandardMaterial3D_2")
-mesh = SubResource("PrismMesh_1")
 
 [node name="CameraContainer" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.866025, 0.5, 0, -0.5, 0.866025, 0, 15, 10)

@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="Gem" load_steps=2 format=3 uid="uid://b0gso4ww407tb"]
 
-[ext_resource type="Script" path="res://scripts/gem.gd" id="1_gem_script"]
+[ext_resource type="Script" path="res://gembrawl/characters/Gem.gd" id="1_gem_script"]
 
 [resource]
 script = ExtResource("1_gem_script")

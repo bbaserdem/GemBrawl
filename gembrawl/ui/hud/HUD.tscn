@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://cv5y4dmx7ui9"]
 
-[ext_resource type="Script" path="res://scripts/ui/combat_ui.gd" id="1_8u7xk"]
+[ext_resource type="Script" path="res://ui/hud/CombatUI.gd" id="1_8u7xk"]
 
 [node name="CombatUI" type="Control"]
 anchors_preset = 15

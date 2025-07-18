@@ -26,6 +26,10 @@ graph TB
     %% Character System
     PlayerCharacter[PlayerCharacter.gd<br/>Player Controller]
     PlayerCharacterScene[PlayerCharacter.tscn<br/>Player Scene]
+    PlayerMovement[PlayerMovement.gd<br/>Movement Component]
+    PlayerCombat[PlayerCombat.gd<br/>Combat Component]
+    PlayerStats[PlayerStats.gd<br/>Stats Component]
+    PlayerInput[PlayerInput.gd<br/>Input Component]
     Gem[Gem.gd<br/>Gem Resource]
     GemResource[GemResource.gd<br/>Gem Data]
     
@@ -88,6 +92,10 @@ graph TB
     %% Player Relationships
     HexArenaGameplay --> PlayerCharacterScene
     PlayerCharacterScene --> PlayerCharacter
+    PlayerCharacter --> PlayerMovement
+    PlayerCharacter --> PlayerCombat
+    PlayerCharacter --> PlayerStats
+    PlayerCharacter --> PlayerInput
     PlayerCharacter --> Gem
     Gem --> GemResource
     
@@ -142,16 +150,41 @@ graph TB
     PlayerCharacter -.->|hex_entered| HexArena
     CombatManager -.->|combo_achieved| AudioManager
     
+    %% Test Scenes
+    TestHex[TestHex.tscn<br/>Basic Hex Test]
+    TestCombatScene[TestCombat.tscn<br/>Combat Skills Test]
+    TestArenaGameplay[TestArenaGameplay.tscn<br/>Multi-Player Arena Test]
+    TestArenaGameplayController[TestArenaGameplayController.gd<br/>Multi-Player Test]
+    TestCombatController[TestCombatController.gd<br/>Single Player Test]
+    TestAOE[TestAOE.tscn<br/>AoE Skill]
+    TestMeleeHitbox[TestMeleeHitbox.tscn<br/>Melee Skill]
+    TestProjectile[TestProjectile.tscn<br/>Projectile Skill]
+    
+    %% Test Scene Relationships
+    TestHex --> HexArena
+    TestHex --> PlayerCharacterScene
+    TestCombatScene --> TestCombatController
+    TestCombatScene --> PlayerCharacterScene
+    TestCombatScene --> TestAOE
+    TestCombatScene --> TestMeleeHitbox
+    TestCombatScene --> TestProjectile
+    TestArenaGameplay --> TestArenaGameplayController
+    TestArenaGameplay --> HexArena
+    TestArenaGameplay --> CombatUI
+    
     %% Legend
     classDef scene fill:#f9f,stroke:#333,stroke-width:2px
     classDef script fill:#9cf,stroke:#333,stroke-width:2px
     classDef node fill:#9f9,stroke:#333,stroke-width:2px
     classDef singleton fill:#ff9,stroke:#333,stroke-width:2px
     classDef signal fill:#fcc,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5
+    classDef test fill:#fcf,stroke:#333,stroke-width:2px
     
     class MainGame,LocalMultiplayer,PracticeArena,HexArenaGameplay,Arena1,Arena2,PlayerCharacterScene,Tile,TrapTile,SpawnPoint,HUD,CombatUI,HealthBar,DamageNumber scene
-    class Main,ArenaBase,HexArena,HexGrid,PlayerCharacter,Gem,GemResource,SkillBase,Skill,CutSkill,PolishSkill,ShineSkill,AoeAttack,Projectile,MeleeHitbox,DamageSystem,Hitbox,CombatLayers,HUDManager,AoeVisual,CameraController,SimpleCamera,NetworkManager,LobbyManager script
+    class Main,ArenaBase,HexArena,HexGrid,PlayerCharacter,PlayerMovement,PlayerCombat,PlayerStats,PlayerInput,Gem,GemResource,SkillBase,Skill,CutSkill,PolishSkill,ShineSkill,AoeAttack,Projectile,MeleeHitbox,DamageSystem,Hitbox,CombatLayers,HUDManager,AoeVisual,CameraController,SimpleCamera,NetworkManager,LobbyManager script
     class CombatManager,GameState,AudioManager,MatchConfig,SceneLoader singleton
+    class TestHex,TestCombatScene,TestArenaGameplay,TestAOE,TestMeleeHitbox,TestProjectile test
+    class TestCombatController,TestArenaGameplayController script
 ```
 
 ## Architecture Overview
@@ -171,7 +204,11 @@ graph TB
 - Creates floor tiles, trap tiles, and spawn points
 
 #### Character System
-- **PlayerCharacter** is the main player controller
+- **PlayerCharacter** is the main player controller using a component-based architecture
+  - **PlayerMovement** - Handles all movement logic (free and hex-based)
+  - **PlayerCombat** - Manages damage, defense, and skill usage
+  - **PlayerStats** - Tracks health, lives, and respawn logic
+  - **PlayerInput** - Processes keyboard and gamepad input
 - Each player has a **Gem** resource defining their stats and abilities
 - Supports both free movement and hex-snapped movement
 

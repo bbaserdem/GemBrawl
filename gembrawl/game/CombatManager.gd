@@ -26,6 +26,10 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
 ## Register a combat hit
+## Tracks hits for combo detection, applies global modifiers, and checks friendly fire rules
+## @param attacker: The node dealing damage
+## @param target: The node receiving damage
+## @param damage_info: Damage information including type, amount, and modifiers
 func register_hit(attacker: Node3D, target: Node3D, damage_info: DamageSystem.DamageInfo) -> void:
 	# Apply global damage multiplier
 	damage_info.multiplier *= global_damage_multiplier
@@ -54,6 +58,9 @@ func register_hit(attacker: Node3D, target: Node3D, damage_info: DamageSystem.Da
 	combat_hit.emit(attacker, target, damage_info)
 
 ## Register player death
+## Cleans up victim's active projectiles/AoEs and emits death signal
+## @param victim: The player who died
+## @param killer: The node that caused the death (optional)
 func register_player_death(victim: Player3D, killer: Node3D = null) -> void:
 	player_killed.emit(victim, killer)
 	
@@ -84,6 +91,9 @@ func _are_teammates(node1: Node3D, node2: Node3D) -> bool:
 	return false
 
 ## Check for combo achievements
+## Analyzes recent hits to detect combo chains within the combo window
+## Emits combo_achieved signal when 3+ hits are chained
+## @param attacker: The player to check combos for
 func _check_combos(attacker: Node3D) -> void:
 	var current_time = Time.get_ticks_msec() / 1000.0
 	var combo_count = 0
@@ -113,6 +123,11 @@ func _on_aoe_removed(aoe: AoeAttack) -> void:
 	active_aoes.erase(aoe)
 
 ## Get active combat entities near position
+## Returns all players within the specified radius of a position
+## Useful for AoE effects and proximity-based mechanics
+## @param position: Center position to search from
+## @param radius: Search radius in world units
+## @return: Array of Node3D entities within range
 func get_combat_entities_near(position: Vector3, radius: float) -> Array[Node3D]:
 	var entities: Array[Node3D] = []
 	var players = get_tree().get_nodes_in_group("players")

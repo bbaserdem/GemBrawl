@@ -93,6 +93,8 @@ func _create_wall_mesh() -> void:
 	pass
 
 ## Generate the arena floor
+## Creates hexagonal tiles in a radius pattern with collision and visual meshes
+## Applies random height variation for visual interest
 func generate_arena() -> void:
 	# Clear existing tiles
 	for tile in floor_tiles.values():
@@ -137,6 +139,8 @@ func generate_arena() -> void:
 		floor_tiles[hex_coord] = static_body
 
 ## Generate hazards on the arena
+## Randomly places hazard tiles avoiding edges and spawn areas
+## Uses multiple attempts to ensure proper hazard distribution
 func generate_hazards() -> void:
 	# Clear existing hazards
 	for hazard in hazard_tiles.values():
@@ -194,6 +198,8 @@ func generate_hazards() -> void:
 				placed += 1
 
 ## Generate spawn points for players
+## Creates evenly distributed spawn points around the arena perimeter
+## Automatically adjusts to support different player counts
 func generate_spawn_points() -> void:
 	# Clear existing spawn points
 	for spawn in spawn_points:
@@ -239,6 +245,8 @@ func is_valid_hex(hex_coord: Vector2i) -> bool:
 	return floor_tiles.has(hex_coord)
 
 ## Create a collision shape for hex tiles
+## Currently uses box approximation for performance
+## @return: BoxShape3D sized to contain the hexagon
 func _create_hex_collision_shape() -> Shape3D:
 	# Create a simple box shape for now
 	# In a real implementation, you'd want a proper hexagonal prism

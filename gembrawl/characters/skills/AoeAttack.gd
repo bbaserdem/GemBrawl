@@ -59,6 +59,10 @@ func _ready() -> void:
 	_activate()
 
 ## Initialize the AoE attack
+## Sets owner, position, and facing direction for the AoE effect
+## @param player: The player who created this AoE
+## @param position: World position to spawn the AoE
+## @param facing: Direction the AoE should face (for cone/line shapes)
 func setup(player: Player3D, position: Vector3, facing: Vector3 = Vector3.FORWARD) -> void:
 	owner_player = player
 	global_position = position
@@ -105,6 +109,8 @@ func _process_persistent_damage() -> void:
 	_deactivate()
 
 ## Check and damage targets in area
+## Queries physics space for targets based on AoE shape and applies damage
+## Maintains a hit list to prevent duplicate damage in single-hit AoEs
 func _check_targets() -> void:
 	var space_state = get_world_3d().direct_space_state
 	var targets_found: Array[Node3D] = []
@@ -129,6 +135,9 @@ func _check_targets() -> void:
 		hit_targets.emit(targets_hit)
 
 ## Get targets in sphere
+## Uses physics shape query to find all colliders within sphere radius
+## @param space_state: Physics space for collision queries
+## @return: Array of Node3D targets within the sphere
 func _get_targets_in_sphere(space_state: PhysicsDirectSpaceState3D) -> Array[Node3D]:
 	var shape_rid = PhysicsServer3D.sphere_shape_create()
 	PhysicsServer3D.shape_set_data(shape_rid, radius)
@@ -149,6 +158,9 @@ func _get_targets_in_sphere(space_state: PhysicsDirectSpaceState3D) -> Array[Nod
 	return targets
 
 ## Get targets in cone
+## Filters sphere targets by angle from forward direction
+## @param space_state: Physics space for collision queries
+## @return: Array of Node3D targets within the cone angle
 func _get_targets_in_cone(space_state: PhysicsDirectSpaceState3D) -> Array[Node3D]:
 	# First get all targets in sphere
 	var potential_targets = _get_targets_in_sphere(space_state)
@@ -167,6 +179,9 @@ func _get_targets_in_cone(space_state: PhysicsDirectSpaceState3D) -> Array[Node3
 	return targets
 
 ## Get targets in line
+## Uses box shape query to find targets in a line/beam pattern
+## @param space_state: Physics space for collision queries
+## @return: Array of Node3D targets within the line area
 func _get_targets_in_line(space_state: PhysicsDirectSpaceState3D) -> Array[Node3D]:
 	var shape_rid = PhysicsServer3D.box_shape_create()
 	var box_size = Vector3(line_width, 2.0, radius)  # Width x Height x Length

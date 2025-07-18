@@ -53,6 +53,10 @@ func _ready() -> void:
 	lifetime_timer.timeout.connect(_destroy)
 
 ## Initialize the projectile
+## Sets owner, spawn position, and initial direction
+## @param player: The player who fired this projectile
+## @param spawn_position: World position to spawn at
+## @param fire_direction: Initial direction vector (will be normalized)
 func setup(player: Player3D, spawn_position: Vector3, fire_direction: Vector3) -> void:
 	owner_player = player
 	global_position = spawn_position
@@ -88,6 +92,9 @@ func _physics_process(delta: float) -> void:
 		_on_hit_world()
 
 ## Handle hitbox collision with bodies
+## Applies damage to valid targets and manages pierce mechanics
+## Ignores owner and already-hit targets based on pierce settings
+## @param body: The colliding body
 func _on_hitbox_body_entered(body: Node3D) -> void:
 	# Don't hit the owner
 	if body == owner_player:

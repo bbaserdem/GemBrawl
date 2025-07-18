@@ -39,6 +39,9 @@ class DamageInfo extends RefCounted:
 		return damage_dealt if damage_dealt > 0 else final_damage
 
 ## Calculate damage with all modifiers
+## Applies critical hits, damage type defenses, and elemental interactions
+## @param info: DamageInfo object containing source, target, and base damage
+## @return: Updated DamageInfo with calculated final_damage and damage_dealt
 static func calculate_damage(info: DamageInfo) -> DamageInfo:
 	# Start with base damage
 	info.final_damage = info.base_damage
@@ -77,6 +80,10 @@ static func calculate_damage(info: DamageInfo) -> DamageInfo:
 	return info
 
 ## Calculate elemental damage with resistances/weaknesses
+## Applies elemental effectiveness multipliers and magic defense reduction
+## @param info: DamageInfo containing element information
+## @param defense: Target's magic resistance value
+## @return: Final damage after elemental calculations
 static func _calculate_elemental_damage(info: DamageInfo, defense: int) -> int:
 	var damage: int = info.final_damage
 	
@@ -91,6 +98,10 @@ static func _calculate_elemental_damage(info: DamageInfo, defense: int) -> int:
 	return max(1, int(damage * (1.0 - reduction)))
 
 ## Get elemental effectiveness multiplier
+## Implements rock-paper-scissors style: Ruby > Sapphire > Emerald > Ruby
+## @param attacker_element: Element type of the attacker
+## @param defender_element: Element type of the defender
+## @return: Damage multiplier (1.5 for super effective, 0.5 for not very effective, 1.0 for neutral)
 static func _get_element_effectiveness(attacker_element: String, defender_element: String) -> float:
 	# Rock-paper-scissors style: Ruby > Sapphire > Emerald > Ruby
 	# Can be expanded with more gem types
@@ -136,6 +147,10 @@ static func create_skill_damage(source: Node3D, target: Node3D, base_damage: int
 	return info
 
 ## Apply damage to target and return actual damage dealt
+## Calculates final damage and calls target's take_damage method
+## Also emits damage_dealt signal on source for UI updates
+## @param info: DamageInfo with source, target, and damage parameters
+## @return: Actual damage dealt after all calculations
 static func apply_damage(info: DamageInfo) -> int:
 	# Calculate final damage
 	calculate_damage(info)

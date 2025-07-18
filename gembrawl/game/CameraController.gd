@@ -155,8 +155,9 @@ func _handle_keyboard_input(delta: float) -> void:
 		elif Input.is_action_pressed("rotate_camera_right"):
 			rotation.y -= deg_to_rad(rotation_speed * delta)
 
-## Gamepad functions
-
+## Handle gamepad camera controls
+## Processes right stick for rotation/zoom and shoulder buttons for tilt
+## @param delta: Frame time for smooth movement
 func _handle_gamepad_camera(delta: float) -> void:
 	# Right stick camera controls
 	if Input.get_connected_joypads().size() > 0:
@@ -184,6 +185,9 @@ func _handle_gamepad_camera(delta: float) -> void:
 		elif Input.is_action_pressed("tilt_camera_down"):
 			_adjust_tilt(-tilt_speed * delta)
 
+## Handle edge-of-screen panning
+## Moves camera when mouse is near screen edges
+## @param delta: Frame time for smooth movement
 func _handle_edge_pan(delta: float) -> void:
 	var viewport = get_viewport()
 	var mouse_pos = viewport.get_mouse_position()
@@ -216,6 +220,8 @@ func _adjust_zoom(delta_zoom: float) -> void:
 	current_zoom = clamp(current_zoom + delta_zoom, min_zoom, max_zoom)
 	_update_camera_position()
 
+## Update camera position and orientation
+## Applies rotation, tilt, and zoom to the camera pivot system
 func _update_camera_position() -> void:
 	if not is_initialized or not camera_pivot or not camera:
 		return

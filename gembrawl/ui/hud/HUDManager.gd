@@ -1,8 +1,8 @@
-## Combat UI Manager
-## Manages the display of health bars and other combat UI elements
+## HUD Manager
+## Manages the overall HUD display including health bars and combat UI elements
 
 extends Control
-class_name CombatUI
+class_name HUDManager
 
 @export var health_bar_scene: PackedScene = preload("res://ui/hud/HealthBar.tscn")
 
@@ -19,6 +19,8 @@ func _ready() -> void:
 	# CombatUI created with health bars
 
 ## Create health bar UI elements using containers
+## Sets up a top-aligned HUD with health bars for both players
+## Uses HBoxContainer with spacer for left/right alignment
 func _create_health_bars() -> void:
 	# Create top margin
 	var top_margin = MarginContainer.new()
@@ -53,6 +55,9 @@ func _create_health_bars() -> void:
 	hbox.add_child(player2_health_bar)
 
 ## Set up health bars with player references
+## Connects health bars to their respective player nodes
+## @param player1: First player node to track
+## @param player2: Second player node to track
 func setup_players(player1: Node3D, player2: Node3D) -> void:
 	if player1_health_bar and player1:
 		player1_health_bar.setup(player1, "Player 1")

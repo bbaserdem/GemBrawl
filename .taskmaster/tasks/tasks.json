@@ -256,7 +256,7 @@
             "description": "Create the basic hexagonal tile layout for the arena using Godot's TileMap.",
             "dependencies": [],
             "details": "Use Godot's TileMap to arrange hexagonal tiles in an isometric view. Ensure the layout supports the hexagonal shape of the arena.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -480,7 +480,7 @@
     ],
     "metadata": {
       "created": "2025-07-15T18:49:15.591Z",
-      "updated": "2025-07-17T16:13:11.201Z",
+      "updated": "2025-07-18T18:50:12.604Z",
       "description": "Tasks for master context"
     }
   }

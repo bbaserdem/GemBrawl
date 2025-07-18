@@ -1,5 +1,5 @@
-## Player3D - 3D player controller for hex-based movement
-## Uses CharacterBody3D for proper 3D physics and movement
+## Player3D - Main player controller using component system
+## Coordinates between movement, combat, stats, and input components
 class_name Player3D
 extends CharacterBody3D
 
@@ -8,45 +8,31 @@ extends CharacterBody3D
 @export var player_id: int = 1
 @export var is_local_player: bool = true
 
-## Movement settings
-@export var movement_speed: float = 5.0
-@export var acceleration: float = 10.0
-@export var friction: float = 10.0
-@export var rotation_speed: float = 10.0
+## Component references
+@onready var movement: PlayerMovement = $Movement
+@onready var combat: PlayerCombat = $Combat
+@onready var stats: PlayerStats = $Stats
+@onready var input: PlayerInput = $Input
 
-## Jump and gravity settings
-@export var jump_force: float = 10.0
-@export var gravity: float = 20.0
-@export var max_fall_speed: float = 30.0
-@export var ground_height: float = 0.5  # Default ground level
-@export var step_height: float = 0.3  # Maximum height the player can step up
-
-## Hex movement
-@export var snap_to_hex: bool = false  # Whether to snap to hex centers
-@export var hex_move_time: float = 0.2  # Time to move between hexes
-
-## Combat state
-var is_alive: bool = true
-var invulnerable: bool = false
-var invulnerability_duration: float = 0.5
-var current_lives: int = 3
-var max_lives: int = 3
-var is_spectator: bool = false
-
-## Skill state
-var skill_ready: bool = true
-var skill_cooldown_timer: float = 0.0
-
-## Movement state
-var current_hex: Vector2i = Vector2i.ZERO
-var target_hex: Vector2i = Vector2i.ZERO
-var hex_move_progress: float = 0.0
-var is_moving_to_hex: bool = false
+## Visual nodes
+@onready var mesh_instance: MeshInstance3D = $MeshInstance3D
+@onready var collision_shape: CollisionShape3D = $CollisionShape3D
+@onready var direction_indicator: Node3D = $DirectionArrow
 
 ## Arena reference
 var arena: HexArena
 
-## Signals
+## Quick access to state (delegated to components)
+var is_alive: bool:
+	get: return stats.is_alive if stats else true
+var is_spectator: bool:
+	get: return stats.is_spectator if stats else false
+var invulnerable: bool:
+	get: return combat.invulnerable if combat else false
+var current_hex: Vector2i:
+	get: return movement.current_hex if movement else Vector2i.ZERO
+
+## Signals (re-exposed from components)
 signal health_changed(new_health: int, max_health: int)
 signal defeated()
 signal skill_used()
@@ -57,17 +43,15 @@ signal respawning(time_until_respawn: float)
 signal damage_dealt(damage_info: DamageSystem.DamageInfo)
 signal damage_received(damage_info: DamageSystem.DamageInfo)
 
-## Visual nodes
-@onready var mesh_instance: MeshInstance3D = $MeshInstance3D
-@onready var collision_shape: CollisionShape3D = $CollisionShape3D
-@onready var direction_indicator: Node3D = $DirectionArrow
-
 func _ready() -> void:
+	# Add components if they don't exist
+	_ensure_components()
+	
 	# Configure floor stepping
 	floor_stop_on_slope = true
 	floor_block_on_wall = true
-	floor_snap_length = step_height
-	floor_max_angle = deg_to_rad(45)  # Allow walking up 45 degree slopes
+	floor_snap_length = 0.3
+	floor_max_angle = deg_to_rad(45)
 	
 	# Set up collision layers for combat
 	CombatLayers.setup_combat_body(self, CombatLayers.Layer.PLAYER)
@@ -75,408 +59,177 @@ func _ready() -> void:
 	# Find arena in scene
 	arena = get_node_or_null("/root/Main/HexArena")
 	
+	# Initialize components
+	_setup_components()
+	
 	# Apply gem properties
-	if gem_data:
-		movement_speed = gem_data.movement_speed / 100.0  # Convert to 3D scale
-		
-		# Apply gem visuals
-		if mesh_instance:
-			var material = StandardMaterial3D.new()
-			material.albedo_color = gem_data.color
-			mesh_instance.material_override = material
-	
-	# Initialize hex position
-	_update_current_hex()
-	
-	# Set initial height - will be adjusted by gravity/collision
-	if global_position.y < ground_height:
-		global_position.y = ground_height
-	
-	# Configure collision layers
-	CombatLayers.setup_combat_body(self, CombatLayers.Layer.PLAYER)
+	_apply_gem_properties()
 	
 	# Add to players group for easy access
 	add_to_group("players")
+	
+	# Connect component signals
+	_connect_signals()
+
+## Ensure all components exist
+func _ensure_components() -> void:
+	if not movement:
+		movement = PlayerMovement.new()
+		movement.name = "Movement"
+		add_child(movement)
+	
+	if not combat:
+		combat = PlayerCombat.new()
+		combat.name = "Combat"
+		add_child(combat)
+	
+	if not stats:
+		stats = PlayerStats.new()
+		stats.name = "Stats"
+		add_child(stats)
+	
+	if not input:
+		input = PlayerInput.new()
+		input.name = "Input"
+		add_child(input)
+
+## Setup components with initial data
+func _setup_components() -> void:
+	if movement and arena:
+		movement.setup(arena)
+	
+	if combat and gem_data:
+		combat.setup(gem_data)
+	
+	if stats and gem_data:
+		stats.setup(gem_data)
+
+## Apply gem properties to player
+func _apply_gem_properties() -> void:
+	if not gem_data:
+		return
+	
+	# Apply movement speed
+	if movement:
+		movement.movement_speed = gem_data.movement_speed / 100.0  # Convert to 3D scale
+	
+	# Apply gem visuals
+	if mesh_instance:
+		var material = StandardMaterial3D.new()
+		material.albedo_color = gem_data.color
+		mesh_instance.material_override = material
+
+## Connect signals from components to re-expose them
+func _connect_signals() -> void:
+	# Movement signals
+	if movement:
+		movement.hex_entered.connect(_on_hex_entered)
+	
+	# Combat signals
+	if combat:
+		combat.damage_dealt.connect(_on_damage_dealt)
+		combat.damage_received.connect(_on_damage_received)
+		combat.skill_used.connect(_on_skill_used)
+	
+	# Stats signals
+	if stats:
+		stats.health_changed.connect(_on_health_changed)
+		stats.lives_changed.connect(_on_lives_changed)
+		stats.defeated.connect(_on_defeated)
+		stats.became_spectator.connect(_on_became_spectator)
+		stats.respawning.connect(_on_respawning)
 
 func _physics_process(delta: float) -> void:
-	if not is_local_player or (not is_alive and not is_spectator):
+	if not is_local_player:
 		return
 	
-	# Spectator mode - only allow camera movement
-	if is_spectator:
-		_handle_spectator_movement(delta)
-		return
+	# Get input
+	var input_vector = input.get_movement_input() if input else Vector2.ZERO
 	
-	if snap_to_hex:
-		_handle_hex_movement(delta)
-	else:
-		_handle_free_movement(delta)
-	
-	# Update skill cooldown
-	if not skill_ready:
-		skill_cooldown_timer -= delta
-		if skill_cooldown_timer <= 0:
-			skill_ready = true
+	# Handle movement based on state
+	if stats and stats.is_spectator:
+		if movement:
+			movement.handle_spectator_movement(delta, input_vector)
+	elif stats and stats.is_alive:
+		# Normal movement
+		if movement:
+			movement.process_movement(delta, input_vector)
+		
+		# Update combat
+		if combat:
+			combat.process_combat(delta)
+		
+		# Check for skill usage
+		if input and combat and input.is_skill_action_pressed() and combat.is_skill_ready():
+			use_skill()
 
-## Handle free movement (not snapped to hex grid)
-func _handle_free_movement(delta: float) -> void:
-	# Get input vector
-	var input_vector = _get_movement_input()
-	
-	# Apply gravity
-	if not is_on_floor():
-		velocity.y -= gravity * delta
-		velocity.y = max(velocity.y, -max_fall_speed)
-	
-	# Handle jumping
-	if is_on_floor() and Input.is_action_just_pressed("jump"):
-		velocity.y = jump_force
-	
-	if input_vector.length() > 0:
-		# Get camera rotation for camera-relative movement
-		var camera = get_viewport().get_camera_3d()
-		var camera_transform = camera.get_global_transform()
-		
-		# Get camera forward and right vectors (projected on XZ plane)
-		var cam_forward = -camera_transform.basis.z
-		cam_forward.y = 0
-		cam_forward = cam_forward.normalized()
-		
-		var cam_right = camera_transform.basis.x
-		cam_right.y = 0
-		cam_right = cam_right.normalized()
-		
-		# Convert 2D input to 3D movement relative to camera
-		var movement_direction = cam_forward * -input_vector.y + cam_right * input_vector.x
-		
-		# Apply horizontal movement
-		var horizontal_velocity = Vector3(velocity.x, 0, velocity.z)
-		horizontal_velocity = horizontal_velocity.move_toward(movement_direction * movement_speed, acceleration * delta)
-		velocity.x = horizontal_velocity.x
-		velocity.z = horizontal_velocity.z
-		
-		# Rotate to face movement direction
-		if horizontal_velocity.length() > 0.1:
-			var look_direction = horizontal_velocity.normalized()
-			var target_rotation = atan2(look_direction.x, look_direction.z)
-			rotation.y = lerp_angle(rotation.y, target_rotation, rotation_speed * delta)
-	else:
-		# Apply friction to horizontal movement only
-		var horizontal_velocity = Vector3(velocity.x, 0, velocity.z)
-		horizontal_velocity = horizontal_velocity.move_toward(Vector3.ZERO, friction * delta)
-		velocity.x = horizontal_velocity.x
-		velocity.z = horizontal_velocity.z
-	
-	move_and_slide()
-	
-	# Update current hex position
-	var new_hex = HexGrid.world_to_hex_3d(global_position)
-	if new_hex != current_hex:
-		current_hex = new_hex
-		hex_entered.emit(current_hex)
+## Public interface methods that delegate to components
 
-## Handle hex-snapped movement
-func _handle_hex_movement(delta: float) -> void:
-	# Apply gravity regardless of hex movement
-	if not is_on_floor():
-		velocity.y -= gravity * delta
-		velocity.y = max(velocity.y, -max_fall_speed)
-	
-	# Handle jumping
-	if is_on_floor() and Input.is_action_just_pressed("jump"):
-		velocity.y = jump_force
-		
-	if not is_moving_to_hex:
-		# Get input and determine target hex
-		var input_vector = _get_movement_input()
-		
-		if input_vector.length() > 0.5:
-			# Determine best hex direction based on input
-			var best_dir = _get_hex_direction_from_input(input_vector)
-			if best_dir != -1:
-				var directions = [
-					Vector2i(1, 0), Vector2i(1, -1), Vector2i(0, -1),
-					Vector2i(-1, 0), Vector2i(-1, 1), Vector2i(0, 1)
-				]
-				
-				var new_hex = current_hex + directions[best_dir]
-				
-				# Check if target hex is valid
-				if arena and arena.is_valid_hex(new_hex) and not arena.is_hazard_hex(new_hex):
-					target_hex = new_hex
-					is_moving_to_hex = true
-					hex_move_progress = 0.0
-	
-	# Perform hex movement
-	if is_moving_to_hex:
-		hex_move_progress += delta / hex_move_time
-		
-		if hex_move_progress >= 1.0:
-			# Movement complete
-			hex_move_progress = 1.0
-			is_moving_to_hex = false
-			current_hex = target_hex
-			hex_entered.emit(current_hex)
-		
-		# Interpolate position
-		var start_pos = HexGrid.hex_to_world_3d(current_hex)
-		var end_pos = HexGrid.hex_to_world_3d(target_hex)
-		var interpolated_pos = start_pos.lerp(end_pos, hex_move_progress)
-		global_position.x = interpolated_pos.x
-		global_position.z = interpolated_pos.z
-		# Let gravity handle Y position
-		
-		# Face movement direction
-		if hex_move_progress < 0.5:
-			var look_dir = (end_pos - start_pos).normalized()
-			var target_rotation = atan2(look_dir.x, look_dir.z)
-			rotation.y = lerp_angle(rotation.y, target_rotation, rotation_speed * delta)
-	
-	# Always apply physics to handle collisions and gravity
-	move_and_slide()
-
-## Get movement input from player
-func _get_movement_input() -> Vector2:
-	var input_vector = Vector2.ZERO
-	
-	# Gamepad input
-	if Input.get_connected_joypads().size() > 0:
-		input_vector.x = Input.get_joy_axis(0, JOY_AXIS_LEFT_X)
-		input_vector.y = Input.get_joy_axis(0, JOY_AXIS_LEFT_Y)
-		
-		# Apply deadzone
-		if input_vector.length() < 0.15:
-			input_vector = Vector2.ZERO
-	
-	# Keyboard input (override gamepad if pressed)
-	var keyboard_vector = Vector2.ZERO
-	keyboard_vector.x = Input.get_axis("move_left", "move_right")
-	keyboard_vector.y = Input.get_axis("move_up", "move_down")
-	
-	if keyboard_vector.length() > 0:
-		input_vector = keyboard_vector
-	
-	# Normalize
-	if input_vector.length() > 1.0:
-		input_vector = input_vector.normalized()
-	
-	return input_vector
-
-## Convert input vector to hex direction (0-5)
-func _get_hex_direction_from_input(input: Vector2) -> int:
-	# Convert input angle to hex direction
-	var angle = atan2(input.y, input.x)
-	var hex_angle = fmod(angle + TAU, TAU)  # Normalize to 0-TAU
-	
-	# Hex directions (pointy-top, starting from right)
-	# 0: Right (0°), 1: Down-Right (60°), 2: Down-Left (120°)
-	# 3: Left (180°), 4: Up-Left (240°), 5: Up-Right (300°)
-	
-	var sector = int(round(hex_angle / (TAU / 6.0))) % 6
-	return sector
-
-## Update current hex position
-func _update_current_hex() -> void:
-	current_hex = HexGrid.world_to_hex_3d(global_position)
-
-func _unhandled_input(event: InputEvent) -> void:
-	if not is_local_player or not is_alive:
-		return
-	
-	# Handle skill activation
-	if event.is_action_pressed("use_skill") and skill_ready:
-		use_skill()
-
-## Take damage from an attack (legacy method for simple damage)
+## Take damage (legacy method)
 func take_damage(damage: int, attacker: Node3D = null) -> void:
-	if invulnerable or not is_alive or is_spectator:
+	if not combat or not stats:
 		return
 	
-	var is_defeated = gem_data.take_damage(damage)
-	health_changed.emit(gem_data.current_health, gem_data.max_health)
-	
+	var is_defeated = combat.take_damage(damage, attacker)
 	if is_defeated:
-		_handle_defeat()
-	else:
-		# Trigger invulnerability and visual feedback
-		_start_invulnerability()
+		stats.handle_defeat()
 
 ## Take damage using the new damage system
 func take_damage_info(damage_info: DamageSystem.DamageInfo) -> void:
-	if invulnerable or not is_alive or is_spectator:
-		damage_info.damage_dealt = 0
+	if not combat or not stats:
 		return
 	
-	# Apply damage through the damage system
-	DamageSystem.calculate_damage(damage_info)
-	print("Player ", name, " - Base: ", damage_info.base_damage, " Final: ", damage_info.damage_dealt)
-	
-	# Show damage number
-	if damage_info.damage_dealt > 0:
-		var damage_number_scene = preload("res://effects/DamageNumber.tscn")
-		var damage_number = damage_number_scene.instantiate()
-		get_tree().current_scene.add_child(damage_number)
-		damage_number.global_position = global_position + Vector3(0, 1.5, 0)
-		damage_number.setup(
-			damage_info.damage_dealt,
-			damage_info.damage_type,
-			damage_info.is_critical
-		)
-	
-	# Apply the calculated damage
-	var is_defeated = gem_data.take_damage(damage_info.damage_dealt)
-	health_changed.emit(gem_data.current_health, gem_data.max_health)
-	damage_received.emit(damage_info)
-	
+	var is_defeated = combat.take_damage_info(damage_info)
 	if is_defeated:
-		_handle_defeat()
-	else:
-		# Trigger invulnerability and visual feedback
-		_start_invulnerability()
+		stats.handle_defeat()
 
 ## Get defense value against specific damage type
 func get_defense_against(damage_type: DamageSystem.DamageType) -> int:
-	if not gem_data:
-		return 0
-	
-	match damage_type:
-		DamageSystem.DamageType.PHYSICAL:
-			return gem_data.defense
-		DamageSystem.DamageType.MAGICAL:
-			return gem_data.magic_resistance
-		DamageSystem.DamageType.TRUE:
-			return 0  # True damage ignores defense
-		DamageSystem.DamageType.ELEMENTAL:
-			return gem_data.magic_resistance  # Use magic resist for elemental
-		_:
-			return 0
+	return combat.get_defense_against(damage_type) if combat else 0
 
 ## Get this player's element type
 func get_element() -> String:
-	if gem_data:
-		return gem_data.element
-	return ""
-
-## Handle player defeat
-func _handle_defeat() -> void:
-	is_alive = false
-	defeated.emit()
-	
-	# Decrease lives
-	current_lives -= 1
-	lives_changed.emit(current_lives, max_lives)
-	
-	if current_lives > 0:
-		# Start respawn process
-		_start_respawn_timer()
-	else:
-		# No more lives - become spectator
-		is_spectator = true
-		became_spectator.emit()
-		visible = false  # Hide the player model
-		collision_layer = 0  # Disable all collisions
-		collision_mask = 0
-
-## Start invulnerability period
-func _start_invulnerability(duration_override: float = -1.0) -> void:
-	invulnerable = true
-	var duration = duration_override if duration_override > 0 else invulnerability_duration
-	
-	# Visual feedback for invulnerability (flashing effect)
-	if mesh_instance and mesh_instance.material_override:
-		var material = mesh_instance.material_override
-		if material is StandardMaterial3D:
-			var tween = create_tween()
-			tween.set_loops(int(duration * 4))  # Flash 4 times per second
-			tween.tween_property(material, "albedo_color:a", 0.3, 0.125)
-			tween.tween_property(material, "albedo_color:a", 1.0, 0.125)
-	
-	await get_tree().create_timer(duration).timeout
-	invulnerable = false
-
-## Start respawn timer
-func _start_respawn_timer() -> void:
-	var respawn_delay: float = 3.0
-	respawning.emit(respawn_delay)
-	
-	# Hide player during respawn
-	visible = false
-	set_physics_process(false)
-	
-	# Countdown timer
-	for i in range(int(respawn_delay)):
-		await get_tree().create_timer(1.0).timeout
-		respawning.emit(respawn_delay - i - 1)
-	
-	# Find a spawn point and respawn
-	var spawn_point = _get_spawn_point()
-	if spawn_point:
-		respawn(spawn_point.global_position)
-
-## Get a suitable spawn point
-func _get_spawn_point() -> Node3D:
-	# Look for spawn points in the scene
-	var spawn_points = get_tree().get_nodes_in_group("spawn_points")
-	if spawn_points.is_empty():
-		push_warning("No spawn points found in scene!")
-		return null
-	
-	# Choose a random spawn point
-	return spawn_points[randi() % spawn_points.size()]
+	return combat.get_element() if combat else ""
 
 ## Use the gem's special skill
 func use_skill() -> void:
-	skill_ready = false
-	skill_cooldown_timer = gem_data.skill_cooldown
-	skill_used.emit()
-	# Skill implementation handled by skill system
+	if combat and combat.use_skill():
+		pass  # Skill was used successfully
 
 ## Respawn the player at a given position
 func respawn(spawn_position: Vector3) -> void:
-	global_position = spawn_position
-	velocity = Vector3.ZERO  # Reset velocity on respawn
-	is_alive = true
-	visible = true
-	gem_data.current_health = gem_data.max_health
-	health_changed.emit(gem_data.current_health, gem_data.max_health)
-	set_physics_process(true)
-	_update_current_hex()
-	
-	# Grant spawn invulnerability (longer duration for respawn)
-	_start_invulnerability(2.0)
+	if stats:
+		stats.respawn(spawn_position)
 
 ## Set position to a specific hex
 func set_hex_position(hex_coord: Vector2i) -> void:
-	current_hex = hex_coord
-	target_hex = hex_coord
-	var hex_pos = HexGrid.hex_to_world_3d(hex_coord)
-	global_position = hex_pos
-	global_position.y = max(hex_pos.y + ground_height, global_position.y)  # Ensure above ground
+	if movement:
+		movement.set_hex_position(hex_coord)
 
-## Handle spectator movement (free-fly camera)
-func _handle_spectator_movement(delta: float) -> void:
-	var input_vector = _get_movement_input()
-	
-	# Allow spectator to fly freely
-	var camera = get_viewport().get_camera_3d()
-	if camera:
-		var camera_transform = camera.get_global_transform()
-		
-		# Get camera vectors
-		var cam_forward = -camera_transform.basis.z
-		var cam_right = camera_transform.basis.x
-		var cam_up = camera_transform.basis.y
-		
-		# Convert input to 3D movement
-		var movement = Vector3.ZERO
-		movement += cam_forward * -input_vector.y
-		movement += cam_right * input_vector.x
-		
-		# Vertical movement
-		if Input.is_action_pressed("jump"):
-			movement += cam_up
-		if Input.is_action_pressed("crouch"):
-			movement -= cam_up
-		
-		# Apply movement
-		global_position += movement.normalized() * movement_speed * 2.0 * delta 
+## Signal handlers to re-emit from components
+func _on_hex_entered(hex_coord: Vector2i) -> void:
+	hex_entered.emit(hex_coord)
+
+func _on_damage_dealt(damage_info: DamageSystem.DamageInfo) -> void:
+	damage_dealt.emit(damage_info)
+
+func _on_damage_received(damage_info: DamageSystem.DamageInfo) -> void:
+	damage_received.emit(damage_info)
+
+func _on_skill_used() -> void:
+	skill_used.emit()
+
+func _on_health_changed(new_health: int, max_health: int) -> void:
+	health_changed.emit(new_health, max_health)
+
+func _on_lives_changed(new_lives: int, max_lives: int) -> void:
+	lives_changed.emit(new_lives, max_lives)
+
+func _on_defeated() -> void:
+	defeated.emit()
+
+func _on_became_spectator() -> void:
+	became_spectator.emit()
+
+func _on_respawning(time_until_respawn: float) -> void:
+	respawning.emit(time_until_respawn)

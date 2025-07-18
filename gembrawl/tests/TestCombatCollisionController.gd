@@ -7,10 +7,10 @@ extends Node3D
 @export var spawn_radius: float = 5.0
 @export var player_scene: PackedScene = preload("res://characters/PlayerCharacter.tscn")
 
-## Combat test scenes
-@export var melee_hitbox_scene: PackedScene = preload("res://tests/combat/TestMeleeHitbox.tscn")
-@export var projectile_scene: PackedScene = preload("res://tests/combat/TestProjectile.tscn")
-@export var aoe_scene: PackedScene = preload("res://tests/combat/TestAOE.tscn")
+## Combat skill classes - using actual game implementations
+const MeleeHitbox = preload("res://characters/skills/MeleeHitbox.gd")
+const Projectile = preload("res://characters/skills/Projectile.gd")
+const AoeAttack = preload("res://characters/skills/AoeAttack.gd")
 
 ## References
 var players: Array[Player3D] = []
@@ -54,10 +54,10 @@ func _ready() -> void:
 	# Create combat UI
 	_create_combat_ui()
 	
-	# Set camera to follow player 1
-	if camera_controller and players.size() > 0:
-		camera_controller.set_follow_target(players[0])
+	# Set arena center for the camera
+	if camera_controller:
 		camera_controller.set_arena_center(Vector3.ZERO)
+		print("Camera setup complete - will auto-detect local player")
 	
 	# Update UI
 	_update_ui()
@@ -123,10 +123,13 @@ func _create_players() -> void:
 		var player = player_scene.instantiate() as Player3D
 		player.player_id = i + 1
 		player.name = "Player" + str(i + 1)
-		player.is_local_player = (i == 0)  # First player is controlled
+		player.is_local_player = (i == 0)  # Only first player is controlled
 		
 		# Add to scene FIRST before accessing global_position
 		add_child(player)
+		
+		# Add player to the "players" group so camera can find them
+		player.add_to_group("players")
 		
 		# Set spawn position AFTER adding to scene tree
 		var spawn_points_array = get_tree().get_nodes_in_group("spawn_points")
@@ -135,13 +138,13 @@ func _create_players() -> void:
 			# Ensure player is at correct height
 			player.global_position.y = max(player.global_position.y, 1.0)
 			
-			# Make player face the center (0, 0, 0)
-			var to_center = -player.global_position
-			to_center.y = 0  # Keep it on the horizontal plane
-			if to_center.length() > 0:
-				to_center = to_center.normalized()
-				# Calculate rotation to face center
-				var rotation_y = atan2(to_center.x, to_center.z)
+			# Make player face away from center (outward)
+			var facing_direction = player.global_position
+			facing_direction.y = 0  # Keep it on the horizontal plane
+			if facing_direction.length() > 0:
+				facing_direction = facing_direction.normalized()
+				# Calculate rotation to face outward
+				var rotation_y = atan2(facing_direction.x, facing_direction.z)
 				player.rotation.y = rotation_y
 		
 		# Connect signals
@@ -174,12 +177,37 @@ func _test_melee_attack() -> void:
 		
 	var attacker = players[current_player_index]
 	
-	# Create melee hitbox
-	var hitbox = melee_hitbox_scene.instantiate() as MeleeHitbox
-	add_child(hitbox)  # Add to scene, not to player
+	# Create melee hitbox node
+	var hitbox = MeleeHitbox.new()
 	
-	# Get forward direction (Godot standard: -transform.basis.z)
-	var forward = -attacker.transform.basis.z
+	# Add a CollisionShape3D to the hitbox BEFORE adding to scene
+	var collision_shape = CollisionShape3D.new()
+	var box_shape = BoxShape3D.new()
+	box_shape.size = Vector3(2.0, 1.0, 1.0)  # Width, Height, Depth
+	collision_shape.shape = box_shape
+	hitbox.add_child(collision_shape)
+	
+	# Add visual indicator for the melee attack
+	var mesh_instance = MeshInstance3D.new()
+	var box_mesh = BoxMesh.new()
+	box_mesh.size = Vector3(2.0, 1.0, 1.0)  # Match collision shape
+	mesh_instance.mesh = box_mesh
+	
+	# Create a semi-transparent material
+	var material = StandardMaterial3D.new()
+	material.albedo_color = Color(1, 0.2, 0.2, 0.5)  # Red, semi-transparent
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.emission_enabled = true
+	material.emission = Color(1, 0, 0)
+	material.emission_energy = 0.3
+	mesh_instance.material_override = material
+	hitbox.add_child(mesh_instance)
+	
+	# Now add to scene
+	add_child(hitbox)
+	
+	# Get forward direction (reversed because players face outward)
+	var forward = attacker.transform.basis.z
 	
 	# Position in front of player at player's center height
 	var spawn_position = attacker.global_position + forward * 1.5
@@ -199,6 +227,10 @@ func _test_melee_attack() -> void:
 	# Connect to hit signal
 	hitbox.hit_target.connect(_on_melee_hit)
 	
+	# Auto-remove the hitbox after its active time
+	await get_tree().create_timer(0.3).timeout
+	hitbox.queue_free()
+	
 	# Melee attack by Player
 
 func _test_projectile() -> void:
@@ -207,25 +239,80 @@ func _test_projectile() -> void:
 		
 	var attacker = players[current_player_index]
 	
-	# Get aim direction (Godot standard: -transform.basis.z)
-	var aim_direction = -attacker.transform.basis.z
+	# Get aim direction (reversed because players face outward)
+	var aim_direction = attacker.transform.basis.z
 	aim_direction.y = 0
 	aim_direction = aim_direction.normalized()
 	
-	# Create projectile manually instead of using static method
-	var projectile = projectile_scene.instantiate() as Projectile
-	add_child(projectile)  # Add to this scene
-	# Spawn projectile further in front of the player to avoid immediate collision
-	# Match player's center height better (capsule is 1.0 tall, so center is at 0.5)
-	var spawn_offset = attacker.global_position + aim_direction * 2.0
-	spawn_offset.y = attacker.global_position.y + 0.5  # Center of player capsule
+	# Create projectile node
+	var projectile = Projectile.new()
+	
+	# Add required child nodes BEFORE adding to scene
+	var mesh_instance = MeshInstance3D.new()
+	mesh_instance.name = "MeshInstance3D"
+	var sphere_mesh = SphereMesh.new()
+	sphere_mesh.radius = 0.3  # Increased from 0.2 for better visibility
+	sphere_mesh.height = 0.6  # Increased from 0.4
+	mesh_instance.mesh = sphere_mesh
+	
+	# Add a simple material for visibility
+	var material = StandardMaterial3D.new()
+	material.albedo_color = Color(1, 0.5, 0)  # Orange color
+	material.emission_enabled = true
+	material.emission = Color(1, 0.3, 0)
+	material.emission_energy = 0.5
+	mesh_instance.material_override = material
+	projectile.add_child(mesh_instance)
+	
+	var collision = CollisionShape3D.new()
+	collision.name = "CollisionShape3D"
+	var sphere_shape = SphereShape3D.new()
+	sphere_shape.radius = 0.3  # Match mesh size
+	collision.shape = sphere_shape
+	projectile.add_child(collision)
+	
+	var hitbox = Area3D.new()
+	hitbox.name = "Hitbox"
+	hitbox.monitoring = true  # Enable monitoring
+	hitbox.monitorable = false  # Hitbox doesn't need to be monitored
+	
+	# Set up collision layers for the hitbox
+	hitbox.collision_layer = 1 << 5  # PROJECTILE layer
+	hitbox.collision_mask = (1 << 1) | (1 << 3)  # PLAYER and ENEMY layers
+	
+	var hitbox_collision = CollisionShape3D.new()
+	var hitbox_shape = SphereShape3D.new()
+	hitbox_shape.radius = 0.6  # Larger hitbox for more reliable detection
+	hitbox_collision.shape = hitbox_shape
+	hitbox.add_child(hitbox_collision)
+	projectile.add_child(hitbox)
+	
+	# NOW add to scene after children are set up
+	add_child(projectile)
+	
+	# Configure projectile properties for testing
+	projectile.speed = 60.0  # Even slower to improve hit detection
+	projectile.damage = 15
+	projectile.lifetime = 8.0  # Longer lifetime for slower projectile
+	projectile.gravity_scale = 0.0  # No gravity for testing
+	
+	# Spawn projectile in front of the player at a lower height
+	var spawn_offset = attacker.global_position + aim_direction * 1.5  # Spawn further to avoid self-collision
+	spawn_offset.y = attacker.global_position.y + 0.2  # Lower height to hit ground targets
 	projectile.setup(attacker, spawn_offset, aim_direction)
+	
+	# Debug collision setup
+	print("Projectile hitbox layer: ", hitbox.collision_layer, " mask: ", hitbox.collision_mask)
 	
 	# Register with combat manager
 	combat_manager.register_projectile(projectile)
 	
 	# Connect hit signal for debug
 	projectile.hit_target.connect(_on_projectile_hit)
+	
+	# Debug: ensure projectile is set up correctly
+	print("Projectile created: pos=", projectile.global_position, " dir=", aim_direction, " speed=", projectile.speed)
+	print("Players in scene: ", players.size(), " Current player: ", attacker.name)
 	
 	status_label.text = "Player %d fired projectile!" % attacker.player_id
 	# Projectile fired by Player
@@ -236,10 +323,21 @@ func _test_aoe_attack() -> void:
 		
 	var attacker = players[current_player_index]
 	
-	# Create AoE manually instead of using static method
-	var aoe = aoe_scene.instantiate() as AoeAttack
-	add_child(aoe)  # Add to this scene
-	var forward = -attacker.transform.basis.z
+	# Create AoE node
+	var aoe = AoeAttack.new()
+	
+	# Configure AoE properties BEFORE adding to scene
+	aoe.damage = 30
+	aoe.radius = 3.0
+	aoe.delay_before_damage = 0.5
+	aoe.duration = 0.1
+	aoe.shape = AoeAttack.Shape.SPHERE
+	
+	# Add to scene
+	add_child(aoe)
+	
+	# Setup AoE after adding to scene (needs scene tree for timers)
+	var forward = attacker.transform.basis.z
 	aoe.setup(attacker, attacker.global_position, forward)
 	
 	# Register with combat manager
@@ -282,7 +380,7 @@ GAMEPAD CAMERA:
   Right Stick Y - Zoom
   Right Stick X - Rotate
   L1/R1 - Tilt Up/Down
-  R3 - Toggle Follow/Static Mode"""
+  R3 - Cycle Camera Modes (Follow → Static → Free)"""
 	
 	status_label.text = "Controlling Player %d" % (current_player_index + 1)
 	debug_label.text = "Players created: %d | Arena: %s" % [players.size(), "Ready" if arena else "Not Found"]
@@ -368,7 +466,9 @@ func _on_melee_hit(target: Node3D, damage_info: DamageSystem.DamageInfo) -> void
 	print("Melee hit target: ", target.name)
 
 func _on_projectile_hit(target: Node3D, damage_info: DamageSystem.DamageInfo) -> void:
-	print("Projectile hit target: ", target.name)
+	var damage = damage_info.get_final_damage()
+	print("Projectile hit target: ", target.name, " for ", damage, " damage")
+	status_label.text = "Hit %s for %d damage!" % [target.name, damage]
 
 func _on_aoe_hit(targets: Array[Node3D]) -> void:
 	# AoE hit targets

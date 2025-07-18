@@ -35,9 +35,12 @@ var current_rotation: float = 0.0  # Current rotation angle in degrees
 @export var enable_follow: bool = true
 
 ## Camera modes
-enum CameraMode { STATIC, FOLLOW_PLAYER }
-var camera_mode: CameraMode = CameraMode.FOLLOW_PLAYER
+enum CameraMode { PLAYER_FOCUSED, THIRD_PERSON, ARENA_FOCUSED }
+var camera_mode: CameraMode = CameraMode.PLAYER_FOCUSED
 var arena_center: Vector3 = Vector3.ZERO
+var default_follow_zoom: float = 20.0  # Default zoom for follow mode
+var default_arena_zoom: float = 35.0  # Default zoom for arena mode
+var arena_camera_position: Vector3 = Vector3.ZERO  # Camera position in arena mode
 
 ## Camera nodes
 @onready var camera_pivot: Node3D = $CameraPivot
@@ -52,6 +55,7 @@ var initial_pivot_rotation: Vector3  # Store initial rotation
 var initial_tilt_degrees: float  # Store initial tilt in degrees
 var is_initialized: bool = false  # Track initialization state
 var current_tilt: float  # Actual rendered tilt (smoothly interpolated)
+var local_player_check_timer: float = 0.0  # Timer for periodic local player checks
 
 func _ready() -> void:
 	# Initialize camera position
@@ -73,11 +77,9 @@ func _ready() -> void:
 	set_process_input(true)
 	set_process_unhandled_input(true)
 	
-	# Find the player if not set
+	# Find the local player if not set
 	if not follow_target:
-		follow_target = get_node_or_null("../Player3D")
-		if follow_target:
-			print("Found player for camera follow")
+		find_local_player()
 	
 	# Set arena center (0,0,0 for our hex arena)
 	arena_center = Vector3.ZERO
@@ -97,23 +99,59 @@ func _process(delta: float) -> void:
 	if enable_edge_pan:
 		_handle_edge_pan(delta)
 	
+	# Periodically check if we need to update the local player (every 0.5 seconds)
+	local_player_check_timer += delta
+	if local_player_check_timer >= 0.5:
+		local_player_check_timer = 0.0
+		# Check if we should track a different player
+		if not follow_target or (follow_target.has_method("get") and not follow_target.get("is_local_player")):
+			find_local_player()
+	
 	# Camera positioning based on mode
 	match camera_mode:
-		CameraMode.STATIC:
-			# Center on arena - adjust position based on tilt angle
-			# Move camera south (positive Z) to compensate for tilt
-			var tilt_offset = 12.0 * sin(deg_to_rad(tilt_angle))  # More offset for steeper angles
-			var static_offset = Vector3(0, 0, tilt_offset)
-			global_position = global_position.lerp(arena_center + static_offset, follow_smoothness * delta)
-			# Zoom out more in static mode for full arena view
-			if current_zoom < 35:
-				current_zoom = lerp(current_zoom, 35.0, delta * 2.0)
-				_update_camera_position()
-		CameraMode.FOLLOW_PLAYER:
-			# Follow target
-			if follow_target:
+		CameraMode.PLAYER_FOCUSED:
+			# Camera follows player with fixed orientation
+			if enable_follow and follow_target and is_instance_valid(follow_target):
 				var target_pos = follow_target.global_position + look_at_offset
 				global_position = global_position.lerp(target_pos, follow_smoothness * delta)
+				
+				# Keep rotation fixed (allow manual control with Q/E or right stick)
+				# Update camera with current zoom
+				_update_camera_position()
+					
+		CameraMode.THIRD_PERSON:
+			# Camera follows player and rotates to keep player facing forward
+			if enable_follow and follow_target and is_instance_valid(follow_target):
+				var target_pos = follow_target.global_position + look_at_offset
+				global_position = global_position.lerp(target_pos, follow_smoothness * delta)
+				
+				# Rotate camera to be behind the player (add 180 degrees)
+				var player_rotation = follow_target.rotation.y + PI
+				var target_rotation = player_rotation
+				
+				# Apply rotation differently from manual rotation
+				rotation.y = lerp_angle(rotation.y, target_rotation, delta * 12.0)
+				current_rotation = rad_to_deg(rotation.y)  # Keep current_rotation in sync
+				
+				# Allow zoom control in third person (don't force to 15.0)
+				_update_camera_position()
+					
+		CameraMode.ARENA_FOCUSED:
+			# Static camera focused on arena center
+			# Zoom controls move camera forward/backward instead of zooming
+			var tilt_offset = 12.0 * sin(deg_to_rad(tilt_angle))
+			var base_position = arena_center + Vector3(0, 0, tilt_offset)
+			
+			# Initialize arena camera position if needed
+			if arena_camera_position == Vector3.ZERO:
+				arena_camera_position = base_position
+			
+			global_position = global_position.lerp(arena_camera_position, follow_smoothness * delta * 2.0)
+			
+			# Fixed zoom level for arena mode
+			if abs(current_zoom - default_arena_zoom) > 0.1:
+				current_zoom = lerp(current_zoom, default_arena_zoom, delta * 2.0)
+				_update_camera_position()
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Toggle camera mode with R3 (right stick press)
@@ -217,8 +255,14 @@ func _adjust_tilt(delta_tilt: float) -> void:
 	tilt_angle = clamp(tilt_angle + delta_tilt, min_tilt, max_tilt)
 
 func _adjust_zoom(delta_zoom: float) -> void:
-	current_zoom = clamp(current_zoom + delta_zoom, min_zoom, max_zoom)
-	_update_camera_position()
+	if camera_mode == CameraMode.ARENA_FOCUSED:
+		# In arena mode, zoom controls move camera forward/backward
+		var forward = -transform.basis.z
+		arena_camera_position += forward * delta_zoom * 2.0
+	else:
+		# Normal zoom behavior for other modes
+		current_zoom = clamp(current_zoom + delta_zoom, min_zoom, max_zoom)
+		_update_camera_position()
 
 ## Update camera position and orientation
 ## Applies rotation, tilt, and zoom to the camera pivot system
@@ -277,14 +321,50 @@ func shake(intensity: float = 1.0, duration: float = 0.5) -> void:
 
 ## Toggle between camera modes
 func _toggle_camera_mode() -> void:
+	# Cycle through modes: PLAYER_FOCUSED -> THIRD_PERSON -> ARENA_FOCUSED -> PLAYER_FOCUSED
 	match camera_mode:
-		CameraMode.STATIC:
-			camera_mode = CameraMode.FOLLOW_PLAYER
-			print("Camera Mode: Follow Player")
-		CameraMode.FOLLOW_PLAYER:
-			camera_mode = CameraMode.STATIC
-			print("Camera Mode: Static (Arena Center)")
+		CameraMode.PLAYER_FOCUSED:
+			camera_mode = CameraMode.THIRD_PERSON
+			enable_follow = true
+			enable_rotation = false  # Disable manual rotation in third person
+			print("Camera Mode: THIRD PERSON")
+		CameraMode.THIRD_PERSON:
+			camera_mode = CameraMode.ARENA_FOCUSED
+			enable_follow = false
+			enable_rotation = true
+			# Initialize arena camera position
+			arena_camera_position = arena_center + Vector3(0, 0, 12.0)
+			print("Camera Mode: ARENA FOCUSED")
+		CameraMode.ARENA_FOCUSED:
+			camera_mode = CameraMode.PLAYER_FOCUSED
+			enable_follow = true
+			enable_rotation = true
+			# Reset zoom to follow default
+			current_zoom = default_follow_zoom
+			_update_camera_position()
+			print("Camera Mode: PLAYER FOCUSED")
 
 ## Set the arena center position
 func set_arena_center(center: Vector3) -> void:
-	arena_center = center 
+	arena_center = center
+
+## Find and set the player with is_local_player = true as the follow target
+func find_local_player() -> void:
+	# First check players in the "players" group
+	var players = get_tree().get_nodes_in_group("players")
+	for player in players:
+		if player.has_method("get") and player.get("is_local_player") == true:
+			set_follow_target(player)
+			print("CameraController: Found local player in group: ", player.name)
+			return
+	
+	# If no player in group, check all children of the current scene
+	var root = get_tree().current_scene
+	if root:
+		for child in root.get_children():
+			if child.has_method("get") and child.get("is_local_player") == true:
+				set_follow_target(child)
+				print("CameraController: Found local player: ", child.name)
+				return
+	
+	print("CameraController: No local player found") 

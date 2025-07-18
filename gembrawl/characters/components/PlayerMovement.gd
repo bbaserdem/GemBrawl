@@ -7,7 +7,7 @@ extends Node
 @export var movement_speed: float = 5.0
 @export var acceleration: float = 10.0
 @export var friction: float = 10.0
-@export var rotation_speed: float = 10.0
+@export var rotation_speed: float = 6.0  # Reduced from 10.0 for smoother turning
 
 ## Jump and gravity settings
 @export var jump_force: float = 10.0

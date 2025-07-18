@@ -5,15 +5,21 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    quaestor = {
+      url = "github:bbaserdem/quaestor";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {
     self,
     nixpkgs,
     flake-utils,
-  }:
+    ...
+  } @ inputs:
     flake-utils.lib.eachDefaultSystem (system: let
       pkgs = import nixpkgs {inherit system;};
+      quaestor = inputs.quaestor.packages.${system}.default;
       exportTemplateDir = "${pkgs.godotPackages_4_3.export-template}/share/godot/export_templates/4.3.stable";
 
       # Function to create script
@@ -44,7 +50,8 @@
             xdg-utils # Open file dialogs
             git # Version control
           ])
-          ++ scripts;
+          ++ scripts
+          ++ [quaestor];
         # Shell hooks
         shellHook = ''
           # Use system export-template for reproducibility

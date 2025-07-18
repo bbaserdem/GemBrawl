@@ -1,0 +1,133 @@
+[gd_scene load_steps=13 format=3 uid="uid://bevrklvpiuccw"]
+
+[ext_resource type="Script" path="res://scripts/player_3d.gd" id="1_p4n5x"]
+[ext_resource type="Resource" uid="uid://b0gso4ww407tb" path="res://resources/test_gem.tres" id="2_8qy7m"]
+[ext_resource type="Script" path="res://scripts/simple_camera_3d.gd" id="3_vy5kt"]
+[ext_resource type="Script" path="res://scripts/test_combat_controller.gd" id="4_t8cyn"]
+[ext_resource type="Script" path="res://scripts/spawn_point_visual.gd" id="5_spawn"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
+albedo_color = Color(0.3, 0.7, 0.3, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_1"]
+material = SubResource("StandardMaterial3D_1")
+size = Vector3(40, 0.1, 40)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
+size = Vector3(40, 0.1, 40)
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2"]
+albedo_color = Color(1, 0, 0, 1)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_1"]
+
+[sub_resource type="PrismMesh" id="PrismMesh_1"]
+
+[node name="TestCombat" type="Node3D"]
+script = ExtResource("4_t8cyn")
+
+[node name="Ground" type="StaticBody3D" parent="."]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
+mesh = SubResource("BoxMesh_1")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
+shape = SubResource("BoxShape3D_1")
+
+[node name="Player" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+script = ExtResource("1_p4n5x")
+gem_data = ExtResource("2_8qy7m")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
+shape = SubResource("CapsuleShape3D_1")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Player"]
+material_override = SubResource("StandardMaterial3D_2")
+mesh = SubResource("CapsuleMesh_1")
+
+[node name="DirectionIndicator" type="Node3D" parent="Player"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+
+[node name="Arrow" type="MeshInstance3D" parent="Player/DirectionIndicator"]
+transform = Transform3D(0.3, 0, 0, 0, -1.31134e-08, -0.3, 0, 0.5, -7.86805e-09, 0, 0, 0.5)
+material_override = SubResource("StandardMaterial3D_2")
+mesh = SubResource("PrismMesh_1")
+
+[node name="CameraContainer" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.866025, 0.5, 0, -0.5, 0.866025, 0, 15, 10)
+script = ExtResource("3_vy5kt")
+
+[node name="Camera3D" type="Camera3D" parent="CameraContainer"]
+
+[node name="SpawnPoints" type="Node3D" parent="."]
+
+[node name="SpawnPoint1" type="Marker3D" parent="SpawnPoints" groups=["spawn_points"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 1, -10)
+script = ExtResource("5_spawn")
+
+[node name="SpawnPoint2" type="Marker3D" parent="SpawnPoints" groups=["spawn_points"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 1, -10)
+script = ExtResource("5_spawn")
+
+[node name="SpawnPoint3" type="Marker3D" parent="SpawnPoints" groups=["spawn_points"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 1, 10)
+script = ExtResource("5_spawn")
+
+[node name="SpawnPoint4" type="Marker3D" parent="SpawnPoints" groups=["spawn_points"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 1, 10)
+script = ExtResource("5_spawn")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.707107, -0.5, 0.5, 0, 0.707107, 0.707107, -0.707107, -0.5, 0.5, 0, 10, 0)
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="DebugPanel" type="Panel" parent="UI"]
+modulate = Color(1, 1, 1, 0.8)
+offset_right = 300.0
+offset_bottom = 200.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/DebugPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Title" type="Label" parent="UI/DebugPanel/VBoxContainer"]
+layout_mode = 2
+text = "Combat Test Controls"
+
+[node name="HSeparator" type="HSeparator" parent="UI/DebugPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="Controls" type="Label" parent="UI/DebugPanel/VBoxContainer"]
+layout_mode = 2
+text = "Press SPACE for random damage type
+Press R to respawn manually
+Press K to instant kill
+Arrow Keys / WASD to move
+Damage types cycle randomly!"
+
+[node name="HSeparator2" type="HSeparator" parent="UI/DebugPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="HealthLabel" type="Label" parent="UI/DebugPanel/VBoxContainer"]
+layout_mode = 2
+text = "Health: 100/100"
+
+[node name="LivesLabel" type="Label" parent="UI/DebugPanel/VBoxContainer"]
+layout_mode = 2
+text = "Lives: 3/3"
+
+[node name="StatusLabel" type="Label" parent="UI/DebugPanel/VBoxContainer"]
+layout_mode = 2
+text = "Status: Alive"

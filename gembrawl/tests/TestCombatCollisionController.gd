@@ -7,6 +7,13 @@ extends Node3D
 @export var spawn_radius: float = 5.0
 @export var player_scene: PackedScene = preload("res://characters/PlayerCharacter.tscn")
 
+## Gem resources for different players
+var gem_resources: Array[Resource] = [
+	preload("res://characters/data/classes/ruby.tres"),
+	preload("res://characters/data/classes/sapphire.tres"),
+	preload("res://characters/data/classes/emerald.tres")
+]
+
 ## Combat skill classes - using actual game implementations
 const MeleeHitbox = preload("res://characters/skills/MeleeHitbox.gd")
 const Projectile = preload("res://characters/skills/Projectile.gd")
@@ -91,16 +98,22 @@ func _create_hex_spawn_points() -> void:
 		# Ensure spawn point is above ground level
 		spawn_point.position = world_pos + Vector3(0, 1.0, 0)  # Raised from 0.5 to 1.0
 		
-		# Add visual indicator
+		# Add visual indicator - small flat disc
 		var mesh = MeshInstance3D.new()
-		mesh.mesh = SphereMesh.new()
-		mesh.mesh.radius = 0.5
-		mesh.mesh.height = 1.0
+		var cylinder = CylinderMesh.new()
+		cylinder.top_radius = 0.5
+		cylinder.bottom_radius = 0.5
+		cylinder.height = 0.05  # Very flat disc
+		cylinder.radial_segments = 16
+		mesh.mesh = cylinder
+		mesh.position.y = -0.9  # Place it on the ground
 		
 		var material = StandardMaterial3D.new()
-		material.albedo_color = Color.GREEN
+		material.albedo_color = Color(0.2, 0.8, 0.2, 0.3)  # Green, semi-transparent
 		material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		material.albedo_color.a = 0.3
+		material.emission_enabled = true
+		material.emission = Color(0.1, 0.4, 0.1)
+		material.emission_energy = 0.2
 		mesh.material_override = material
 		
 		spawn_point.add_child(mesh)
@@ -124,6 +137,13 @@ func _create_players() -> void:
 		player.player_id = i + 1
 		player.name = "Player" + str(i + 1)
 		player.is_local_player = (i == 0)  # Only first player is controlled
+		
+		# Assign a gem to each player (cycle through available gems)
+		if i < gem_resources.size():
+			player.gem_data = gem_resources[i]
+		else:
+			# If more players than gems, cycle through gems
+			player.gem_data = gem_resources[i % gem_resources.size()]
 		
 		# Add to scene FIRST before accessing global_position
 		add_child(player)

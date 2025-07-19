@@ -119,7 +119,10 @@ func _apply_gem_properties() -> void:
 		if gem_data.model_path != "":
 			var gem_model = load(gem_data.model_path)
 			if gem_model:
-				# Clear existing mesh
+				# Hide the default capsule mesh
+				mesh_instance.mesh = null
+				
+				# Clear existing mesh children
 				for child in mesh_instance.get_children():
 					child.queue_free()
 				
@@ -129,11 +132,56 @@ func _apply_gem_properties() -> void:
 				
 				# Scale the model appropriately
 				instance.scale = Vector3.ONE * 0.5  # Adjust scale as needed
+				
+				# Apply gem-specific material enhancements
+				_apply_gem_material_enhancements(instance, gem_data)
 		else:
 			# Fallback to colored material if no model specified
 			var material = StandardMaterial3D.new()
 			material.albedo_color = gem_data.color
 			mesh_instance.material_override = material
+
+## Apply enhanced materials to gem models based on gem type
+func _apply_gem_material_enhancements(node: Node, gem_data: Gem) -> void:
+	if node is MeshInstance3D:
+		var mesh_instance = node as MeshInstance3D
+		var material = StandardMaterial3D.new()
+		
+		# Base color from gem data
+		material.albedo_color = gem_data.color
+		
+		# Make gems reflective but not glowing
+		material.metallic = 0.0  # Gems are not metallic
+		material.roughness = 0.05  # Very slightly rough to catch light better
+		material.specular = 0.8  # High specular reflection
+		
+		# Disable emission for no glow
+		material.emission_enabled = false
+		
+		# Subtle rim lighting to highlight edges
+		material.rim_enabled = true
+		material.rim = 0.2  # Very subtle
+		material.rim_tint = 0.0  # No color tint
+		
+		# Enable clearcoat for polished look
+		material.clearcoat_enabled = true
+		material.clearcoat = 0.5
+		material.clearcoat_roughness = 0.03
+		
+		# Special colors for specific gem types
+		match gem_data.element:
+			"ruby":
+				material.albedo_color = Color(0.9, 0.15, 0.2)  # Bright red
+			"sapphire":
+				material.albedo_color = Color(0.1, 0.3, 1.0)  # Bright blue
+			"emerald":
+				material.albedo_color = Color(0.1, 0.9, 0.3)  # Bright green
+		
+		mesh_instance.material_override = material
+	
+	# Apply to all children
+	for child in node.get_children():
+		_apply_gem_material_enhancements(child, gem_data)
 
 ## Connect signals from components to re-expose them
 func _connect_signals() -> void:

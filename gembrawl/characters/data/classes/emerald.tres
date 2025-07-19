@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Gem" load_steps=2 format=3 uid="uid://dpg2yk1m8vtfh"]
+
+[ext_resource type="Script" path="res://characters/Gem.gd" id="1_gem_script"]
+
+[resource]
+script = ExtResource("1_gem_script")
+gem_name = "Emerald"
+color = Color(0.1, 0.8, 0.2, 1)
+model_path = ""
+element = "emerald"
+max_health = 110
+current_health = 110
+base_damage = 11
+defense = 7
+magic_resistance = 12
+crit_chance_bonus = 0.05
+movement_speed = 300.0
+dash_speed = 600.0
+skill_cooldown = 3.5
+skill_damage_multiplier = 1.7

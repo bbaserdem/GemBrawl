@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Gem" load_steps=2 format=3 uid="uid://c5n7p8qw3xvkt"]
+
+[ext_resource type="Script" path="res://characters/Gem.gd" id="1_gem_script"]
+
+[resource]
+script = ExtResource("1_gem_script")
+gem_name = "Sapphire"
+color = Color(0.1, 0.2, 0.9, 1)
+model_path = ""
+element = "sapphire"
+max_health = 100
+current_health = 100
+base_damage = 12
+defense = 6
+magic_resistance = 15
+crit_chance_bonus = 0.1
+movement_speed = 320.0
+dash_speed = 640.0
+skill_cooldown = 4.0
+skill_damage_multiplier = 1.6

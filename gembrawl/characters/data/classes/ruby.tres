@@ -6,7 +6,7 @@
 script = ExtResource("1_gem_script")
 gem_name = "Ruby"
 color = Color(0.9, 0.1, 0.15, 1)
-model_path = "res://assets/models/items/hex_gem_ruby.glb"
+model_path = "res://assets/models/items/gem_ruby.glb"
 element = "ruby"
 max_health = 120
 current_health = 120

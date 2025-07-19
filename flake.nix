@@ -6,7 +6,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
     quaestor = {
-      url = "github:bbaserdem/quaestor";
+      url = "github:jeanluciano/quaestor";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

@@ -113,15 +113,15 @@
         "uv2nix": "uv2nix"
       },
       "locked": {
-        "lastModified": 1752851548,
-        "narHash": "sha256-vy0CIpkzCmReLhfHZx6rnM+fNUfeDaXb/gAbyPRg5vU=",
-        "owner": "bbaserdem",
+        "lastModified": 1752945257,
+        "narHash": "sha256-qRU6SNMXFWST7YZ39nBy0bKWd2tWso7N0ZD5iOXyZjw=",
+        "owner": "jeanluciano",
         "repo": "quaestor",
-        "rev": "415b67816092bdf6b6c8268db88c936e4820903d",
+        "rev": "2142feefd99f83da7a9976d45fed1365effe1268",
         "type": "github"
       },
       "original": {
-        "owner": "bbaserdem",
+        "owner": "jeanluciano",
         "repo": "quaestor",
         "type": "github"
       }

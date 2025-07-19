@@ -115,9 +115,25 @@ func _apply_gem_properties() -> void:
 	
 	# Apply gem visuals
 	if mesh_instance:
-		var material = StandardMaterial3D.new()
-		material.albedo_color = gem_data.color
-		mesh_instance.material_override = material
+		# Load 3D model if specified
+		if gem_data.model_path != "":
+			var gem_model = load(gem_data.model_path)
+			if gem_model:
+				# Clear existing mesh
+				for child in mesh_instance.get_children():
+					child.queue_free()
+				
+				# Instance the new model
+				var instance = gem_model.instantiate()
+				mesh_instance.add_child(instance)
+				
+				# Scale the model appropriately
+				instance.scale = Vector3.ONE * 0.5  # Adjust scale as needed
+		else:
+			# Fallback to colored material if no model specified
+			var material = StandardMaterial3D.new()
+			material.albedo_color = gem_data.color
+			mesh_instance.material_override = material
 
 ## Connect signals from components to re-expose them
 func _connect_signals() -> void:

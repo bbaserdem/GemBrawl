@@ -7,6 +7,7 @@ extends Resource
 @export var gem_name: String = ""
 @export var color: Color = Color.WHITE
 @export var texture: Texture2D
+@export var model_path: String = ""  # Path to 3D model (GLB/GLTF)
 @export var element: String = ""  # Gem element type (ruby, sapphire, emerald, etc.)
 
 ## Combat stats

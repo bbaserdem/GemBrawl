@@ -2,6 +2,8 @@
 # GemBrawl Project .gitignore
 # Comprehensive ignore patterns for Godot game development
 # =============================================================================
+# Git stuff
+/worktrees/
 
 # =============================================================================
 # SECRETS & CREDENTIALS (CRITICAL - NEVER COMMIT)
@@ -26,6 +28,7 @@ mcp.json
 *.mp4
 *.mov
 *.webm
+extension_api.json
 
 # =============================================================================
 # ASSETS

@@ -1,7 +1,7 @@
 [gd_scene load_steps=8 format=3 uid="uid://bevrklvpiuccw"]
 
 [ext_resource type="PackedScene" path="res://characters/PlayerCharacter.tscn" id="1_p4n5x"]
-[ext_resource type="Script" path="res://game/SimpleCamera.gd" id="3_vy5kt"]
+[ext_resource type="Script" path="res://game/CameraController.gd" id="3_vy5kt"]
 [ext_resource type="Script" path="res://tests/TestCombatController.gd" id="4_t8cyn"]
 [ext_resource type="Script" path="res://tests/SpawnPointVisual.gd" id="5_spawn"]
 
@@ -29,11 +29,21 @@ shape = SubResource("BoxShape3D_1")
 [node name="Player" parent="." instance=ExtResource("1_p4n5x")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 
-[node name="CameraContainer" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.866025, 0.5, 0, -0.5, 0.866025, 0, 15, 10)
+[node name="CameraController" type="Node3D" parent="."]
 script = ExtResource("3_vy5kt")
+look_at_offset = Vector3(0, 1, 0)
+tilt_angle = 45.0
+zoom_speed = 2.0
+min_zoom = 8.0
+max_zoom = 30.0
+follow_smoothness = 8.0
 
-[node name="Camera3D" type="Camera3D" parent="CameraContainer"]
+[node name="CameraPivot" type="Node3D" parent="CameraController"]
+transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 0, 0)
+
+[node name="Camera3D" type="Camera3D" parent="CameraController/CameraPivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 20)
+fov = 45.0
 
 [node name="SpawnPoints" type="Node3D" parent="."]
 

@@ -29,7 +29,7 @@ For a round brilliant cut gem:
   - Girdle bottom: 16 vertices
   - Pavilion mid: 8 vertices (offset by π/8)
   - Bottom table: 8 vertices
-- **130 faces** (after filling all holes)
+- **130 faces** (after filling all holes) - or **344 faces** with double-sided geometry
 - **192 edges** (all marked as sharp)
 
 ### 3. Crystalline Appearance Settings
@@ -137,6 +137,10 @@ When creating templates for other cuts (e.g., emerald, princess, pear):
 - **Solution**: Recalculate normals (face outside)
 - Check face winding order
 - Ensure no inverted faces
+- **Alternative Solution**: Apply Solidify modifier with zero thickness
+  - This duplicates all faces with opposite normals
+  - Ensures visibility from any viewing angle
+  - Eliminates normal direction issues in game engines
 
 ### Issue: Holes in the mesh
 - **Solution**: Use boundary edge selection to find gaps

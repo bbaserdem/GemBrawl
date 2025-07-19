@@ -367,4 +367,4 @@ func find_local_player() -> void:
 				print("CameraController: Found local player: ", child.name)
 				return
 	
-	print("CameraController: No local player found") 
+	# Debug message suppressed - no local player is expected in some test scenes 

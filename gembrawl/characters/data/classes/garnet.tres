@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Gem" load_steps=2 format=3 uid="uid://bgarnetgemresource"]
+
+[ext_resource type="Script" path="res://characters/Gem.gd" id="1_gem_script"]
+
+[resource]
+script = ExtResource("1_gem_script")
+gem_name = "Garnet"
+color = Color(0.7, 0.1, 0.3, 1)
+model_path = "res://assets/models/items/gem_garnet.glb"
+element = "garnet"
+max_health = 115
+current_health = 115
+base_damage = 13
+defense = 8
+magic_resistance = 10
+crit_chance_bonus = 0.08
+movement_speed = 290.0
+dash_speed = 590.0
+skill_cooldown = 4.0
+skill_damage_multiplier = 1.75

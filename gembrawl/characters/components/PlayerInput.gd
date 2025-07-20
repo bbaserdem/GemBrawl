@@ -9,7 +9,7 @@ extends Node
 @export var enable_keyboard: bool = true
 
 ## References
-var player: IPlayer
+var player  ## IPlayer interface - injected from parent
 
 ## Cached input state
 var current_movement_input: Vector2 = Vector2.ZERO
@@ -60,7 +60,7 @@ func is_skill_action_pressed() -> bool:
 
 ## Handle unhandled input events
 func _unhandled_input(event: InputEvent) -> void:
-	if not player.is_local_player():
+	if not player.is_local_player:
 		return
 	
 	# Cache action states for use in process functions

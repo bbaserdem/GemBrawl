@@ -15,7 +15,7 @@ var skill_ready: bool = true
 var skill_cooldown_timer: float = 0.0
 
 ## References
-var player: IPlayer
+var player  ## IPlayer interface - injected from parent
 var gem_data  # Gem resource
 
 ## Signals - untyped parameters to avoid dependency issues
@@ -39,7 +39,7 @@ func process_combat(delta: float) -> void:
 
 ## Take damage from an attack (legacy method)
 func take_damage(damage: int, attacker: Node3D = null) -> bool:
-	if invulnerable or not player.is_alive() or player.is_spectator():
+	if invulnerable or not player.is_alive or player.is_spectator:
 		return false
 	
 	var is_defeated = gem_data.take_damage(damage)
@@ -55,7 +55,7 @@ func take_damage(damage: int, attacker: Node3D = null) -> bool:
 
 ## Take damage using the new damage system
 func take_damage_info(damage_info) -> bool:
-	if invulnerable or not player.is_alive() or player.is_spectator():
+	if invulnerable or not player.is_alive or player.is_spectator:
 		damage_info.damage_dealt = 0
 		return false
 	
@@ -72,7 +72,16 @@ func take_damage_info(damage_info) -> bool:
 	# Emit health_changed signal through the player's stats component
 	if player.get_stats():
 		player.get_stats().health_changed.emit(gem_data.current_health, gem_data.max_health)
-	damage_received.emit(damage_info)
+	# Emit damage_received signal with damage_info as dictionary
+	var damage_dict = {
+		"base_damage": damage_info.base_damage,
+		"damage_type": damage_info.damage_type,
+		"is_critical": damage_info.is_critical,
+		"final_damage": damage_info.final_damage,
+		"damage_dealt": damage_info.damage_dealt,
+		"skill_name": damage_info.skill_name if "skill_name" in damage_info else ""
+	}
+	damage_received.emit(damage_dict)
 	
 	if not is_defeated:
 		# Trigger invulnerability and visual feedback
@@ -139,7 +148,7 @@ func _show_damage_number(damage_info) -> void:
 
 ## Use the gem's special skill
 func use_skill() -> bool:
-	if not skill_ready or not player.is_alive():
+	if not skill_ready or not player.is_alive:
 		return false
 	
 	skill_ready = false

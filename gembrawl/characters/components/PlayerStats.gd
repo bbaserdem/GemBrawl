@@ -13,7 +13,7 @@ var current_lives: int = 3
 var is_spectator: bool = false
 
 ## References
-var player: IPlayer
+var player  ## IPlayer interface - injected from parent
 var gem_data  # Gem resource
 
 ## Health getters

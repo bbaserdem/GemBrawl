@@ -30,7 +30,7 @@ var hex_move_progress: float = 0.0
 var is_moving_to_hex: bool = false
 
 ## References
-var player: IPlayer
+var player  ## IPlayer interface - injected from parent
 var arena  # HexArena reference
 
 ## Signals

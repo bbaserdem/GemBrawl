@@ -3,21 +3,25 @@
 class_name MeleeHitbox
 extends Area3D
 
+# Import dependencies
+const CombatLayers = preload("res://scripts/CombatLayers.gd")
+const DamageSystem = preload("res://scripts/DamageSystem.gd")
+
 ## Hitbox properties
 @export var damage: int = 10
-@export var damage_type: DamageSystem.DamageType = DamageSystem.DamageType.PHYSICAL
+@export var damage_type: int = 0  ## DamageSystem.DamageType (0=PHYSICAL, 1=MAGICAL, 2=TRUE, 3=ELEMENTAL)
 @export var knockback_force: float = 300.0
 @export var active_time: float = 0.2  # How long the hitbox stays active
 @export var hit_pause_duration: float = 0.05  # Brief pause on hit for impact feel
 
 ## Internal state
-var owner_player: Player3D
+var owner_player  ## IPlayer interface - injected from parent
 var targets_hit: Array[Node3D] = []  # Prevent hitting same target multiple times
 var is_active: bool = false
 var deactivate_timer: SceneTreeTimer  # Store timer reference
 
 ## Signals
-signal hit_target(target: Node3D, damage_info: DamageSystem.DamageInfo)
+signal hit_target(target: Node3D, damage_info: Dictionary)  ## damage_info is DamageSystem.DamageInfo
 
 func _ready() -> void:
 	# Configure collision layers
@@ -32,7 +36,7 @@ func _ready() -> void:
 	monitorable = false
 
 ## Initialize the hitbox with its owner
-func setup(player: Player3D) -> void:
+func setup(player) -> void:  ## player: IPlayer interface
 	owner_player = player
 
 ## Activate the hitbox for an attack
@@ -122,8 +126,16 @@ func _apply_damage_to_target(target: Node3D) -> void:
 	# Apply through damage system
 	target.take_damage_info(damage_info)
 	
-	# Emit signal
-	hit_target.emit(target, damage_info)
+	# Emit signal with damage_info as dictionary
+	var damage_dict = {
+		"base_damage": damage_info.base_damage,
+		"damage_type": damage_info.damage_type,
+		"is_critical": damage_info.is_critical,
+		"final_damage": damage_info.final_damage,
+		"damage_dealt": damage_info.damage_dealt,
+		"skill_name": damage_info.skill_name
+	}
+	hit_target.emit(target, damage_dict)
 
 ## Apply knockback to target
 func _apply_knockback(target: Node3D) -> void:

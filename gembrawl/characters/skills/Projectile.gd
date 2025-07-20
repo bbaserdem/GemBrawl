@@ -3,10 +3,14 @@
 class_name Projectile
 extends CharacterBody3D
 
+# Import dependencies
+const CombatLayers = preload("res://scripts/CombatLayers.gd")
+const DamageSystem = preload("res://scripts/DamageSystem.gd")
+
 ## Projectile properties
 @export var speed: float = 800.0
 @export var damage: int = 15
-@export var damage_type: DamageSystem.DamageType = DamageSystem.DamageType.PHYSICAL
+@export var damage_type: int = 0  ## DamageSystem.DamageType (0=PHYSICAL, 1=MAGICAL, 2=TRUE, 3=ELEMENTAL)
 @export var lifetime: float = 3.0
 @export var pierce_count: int = 0  # How many targets it can hit before destroying
 @export var homing_strength: float = 0.0  # 0 = no homing, 1 = strong homing
@@ -17,7 +21,7 @@ extends CharacterBody3D
 @export var gravity_scale: float = 0.0  # For arcing projectiles
 
 ## Internal state
-var owner_player: IPlayer
+var owner_player  ## IPlayer
 var direction: Vector3
 var targets_hit: Array[Node3D] = []
 var current_pierce_count: int = 0
@@ -30,7 +34,7 @@ var lifetime_timer: SceneTreeTimer  # Store timer reference for cleanup
 @onready var hitbox: Area3D = $Hitbox
 
 ## Signals
-signal hit_target(target: Node3D, damage_info: DamageSystem.DamageInfo)
+signal hit_target(target: Node3D, damage_info: Dictionary)  ## damage_info is DamageSystem.DamageInfo
 signal hit_world(position: Vector3)
 
 func _ready() -> void:
@@ -63,7 +67,7 @@ func _ready() -> void:
 ## @param player: The player who fired this projectile
 ## @param spawn_position: World position to spawn at
 ## @param fire_direction: Initial direction vector (will be normalized)
-func setup(player: IPlayer, spawn_position: Vector3, fire_direction: Vector3) -> void:
+func setup(player, spawn_position: Vector3, fire_direction: Vector3) -> void:  ## player: IPlayer
 	owner_player = player
 	global_position = spawn_position
 	direction = fire_direction.normalized()
@@ -118,8 +122,16 @@ func _on_hitbox_body_entered(body: Node3D) -> void:
 		damage_info.damage_type = damage_type
 		body.take_damage_info(damage_info)
 		
-		# Emit hit signal
-		hit_target.emit(body, damage_info)
+		# Emit hit signal with damage_info as dictionary
+		var damage_dict = {
+			"base_damage": damage_info.base_damage,
+			"damage_type": damage_info.damage_type,
+			"is_critical": damage_info.is_critical,
+			"final_damage": damage_info.final_damage,
+			"damage_dealt": damage_info.damage_dealt,
+			"skill_name": damage_info.skill_name
+		}
+		hit_target.emit(body, damage_dict)
 		
 		# Destroy projectile
 		queue_free()
@@ -168,8 +180,16 @@ func _apply_damage_to_target(target: Node3D) -> void:
 	# Apply damage
 	target.take_damage_info(damage_info)
 	
-	# Emit signal
-	hit_target.emit(target, damage_info)
+	# Emit signal with damage_info as dictionary
+	var damage_dict = {
+		"base_damage": damage_info.base_damage,
+		"damage_type": damage_info.damage_type,
+		"is_critical": damage_info.is_critical,
+		"final_damage": damage_info.final_damage,
+		"damage_dealt": damage_info.damage_dealt,
+		"skill_name": damage_info.skill_name
+	}
+	hit_target.emit(target, damage_dict)
 	
 	# Create hit effect
 	if hit_effect_scene:
@@ -194,7 +214,7 @@ func _destroy() -> void:
 	queue_free()
 
 ## Create a projectile from a skill
-static func create_projectile(scene: PackedScene, owner: Player3D, 
+static func create_projectile(scene: PackedScene, owner,  ## owner: IPlayer
 		spawn_pos: Vector3, direction: Vector3) -> Projectile:
 	var projectile = scene.instantiate() as Projectile
 	# Get the current scene to add projectile to

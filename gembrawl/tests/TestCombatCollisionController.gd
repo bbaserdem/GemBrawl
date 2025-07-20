@@ -22,7 +22,7 @@ const AoeAttack = preload("res://characters/skills/AoeAttack.gd")
 ## References
 var players: Array[Player3D] = []
 var current_player_index: int = 0
-var combat_manager: CombatManager
+var combat_manager: Node
 var active_debug_markers: Array[Node3D] = []  # Track active markers for cleanup
 var combat_ui: CombatUI
 var arena: Node3D  # HexArena instance
@@ -34,6 +34,9 @@ var camera_controller: Node3D  # CameraController3D instance
 @onready var debug_label: Label = $UI/VBoxContainer/DebugLabel
 
 func _ready() -> void:
+	# Increase physics tick rate for better collision detection in testing
+	Engine.physics_ticks_per_second = 120  # Double the default 60
+	
 	# Find arena
 	arena = $HexArena
 	if not arena:
@@ -44,8 +47,10 @@ func _ready() -> void:
 	if not camera_controller:
 		push_error("CameraController not found!")
 	
-	# Create combat manager
-	combat_manager = CombatManager.new()
+	# Create combat manager node
+	combat_manager = Node.new()
+	combat_manager.name = "CombatManager"
+	combat_manager.set_script(preload("res://game/CombatManager.gd"))
 	add_child(combat_manager)
 	
 	# Connect combat events
@@ -296,9 +301,8 @@ func _test_projectile() -> void:
 	hitbox.monitoring = true  # Enable monitoring
 	hitbox.monitorable = false  # Hitbox doesn't need to be monitored
 	
-	# Set up collision layers for the hitbox
-	hitbox.collision_layer = 1 << 5  # PROJECTILE layer
-	hitbox.collision_mask = (1 << 1) | (1 << 3)  # PLAYER and ENEMY layers
+	# Set up collision layers for the hitbox using proper CombatLayers
+	CombatLayers.setup_combat_area(hitbox, CombatLayers.Layer.PROJECTILE)
 	
 	var hitbox_collision = CollisionShape3D.new()
 	var hitbox_shape = SphereShape3D.new()
@@ -315,6 +319,10 @@ func _test_projectile() -> void:
 	projectile.damage = 15
 	projectile.lifetime = 8.0  # Longer lifetime for slower projectile
 	projectile.gravity_scale = 0.0  # No gravity for testing
+	
+	# Force physics process on projectile to ensure collision checks
+	projectile.set_physics_process(true)
+	projectile.process_priority = -1  # Process before other nodes
 	
 	# Spawn projectile in front of the player at a lower height
 	var spawn_offset = attacker.global_position + aim_direction * 1.5  # Spawn further to avoid self-collision

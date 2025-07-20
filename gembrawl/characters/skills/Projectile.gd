@@ -37,11 +37,17 @@ func _ready() -> void:
 	# Configure collision layers
 	CombatLayers.setup_combat_body(self, CombatLayers.Layer.PROJECTILE)
 	
+	# Enable continuous collision detection for fast-moving projectiles
+	set_motion_mode(CharacterBody3D.MOTION_MODE_FLOATING)
+	
 	# Setup hitbox if present
 	if hitbox:
 		CombatLayers.setup_combat_area(hitbox, CombatLayers.Layer.PROJECTILE)
 		hitbox.body_entered.connect(_on_hitbox_body_entered)
 		hitbox.area_entered.connect(_on_hitbox_area_entered)
+		# Ensure hitbox is properly configured
+		hitbox.monitoring = true
+		hitbox.monitorable = false
 	
 	# Create trail effect
 	if trail_effect_scene:
@@ -70,6 +76,9 @@ func set_homing_target(target: Node3D) -> void:
 	homing_target = target
 
 func _physics_process(delta: float) -> void:
+	# Store previous position for raycast
+	var prev_position = global_position
+	
 	# Apply homing if enabled
 	if homing_strength > 0 and is_instance_valid(homing_target):
 		var to_target = (homing_target.global_position - global_position).normalized()
@@ -86,6 +95,9 @@ func _physics_process(delta: float) -> void:
 	
 	# Move and check for collisions
 	move_and_slide()
+	
+	# Backup collision detection using raycast
+	_check_raycast_collision(prev_position, global_position)
 	
 	# Check if hit world geometry
 	if is_on_wall() or is_on_floor() or is_on_ceiling():
@@ -116,6 +128,28 @@ func _on_hitbox_body_entered(body: Node3D) -> void:
 func _on_hitbox_area_entered(area: Area3D) -> void:
 	# Could be used for shields, projectile deflection, etc.
 	pass
+
+## Backup collision detection using raycast
+func _check_raycast_collision(from: Vector3, to: Vector3) -> void:
+	# Skip if already hit something
+	if targets_hit.size() > 0 and pierce_count == 0:
+		return
+		
+	var space_state = get_world_3d().direct_space_state
+	var query = PhysicsRayQueryParameters3D.create(from, to)
+	
+	# Set collision mask to match hitbox mask
+	query.collision_mask = hitbox.collision_mask if hitbox else 11
+	query.exclude = [self, owner_player] # Exclude self and owner
+	query.collide_with_bodies = true
+	query.collide_with_areas = false
+	
+	var result = space_state.intersect_ray(query)
+	if result and result.collider:
+		var body = result.collider
+		# Check if it's a valid target we haven't hit yet
+		if body != owner_player and body not in targets_hit and body.has_method("take_damage_info"):
+			_on_hitbox_body_entered(body)
 
 ## Apply damage to target
 func _apply_damage_to_target(target: Node3D) -> void:

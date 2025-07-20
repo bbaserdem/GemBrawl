@@ -1,0 +1,15 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://d9xj8w4k6n5m5"]
+
+[ext_resource type="Shader" path="res://shaders/transmission_gem_fixed.gdshader" id="1_gem"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_gem")
+shader_parameter/gem_color = Color(0.1, 0.8, 0.2, 1.0)
+shader_parameter/roughness = 0.05
+shader_parameter/rim_power = 2.5
+shader_parameter/rim_strength = 0.6
+shader_parameter/rim_color = Color(0.4, 1.0, 0.5, 1.0)
+shader_parameter/specular_strength = 1.2
+shader_parameter/fresnel_strength = 0.3
+shader_parameter/inner_glow = 0.2

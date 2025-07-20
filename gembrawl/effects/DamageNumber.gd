@@ -3,6 +3,9 @@
 class_name DamageNumber
 extends Node3D
 
+# Ensure DamageSystem is loaded and available as constant
+const DamageSystem = preload("res://scripts/DamageSystem.gd")
+
 ## Visual settings
 @export var float_speed: float = 2.0
 @export var float_distance: float = 2.0
@@ -40,7 +43,7 @@ func _ready() -> void:
 	# Start with zero scale for popup effect
 	scale = Vector3.ZERO
 
-func setup(damage: int, damage_type: DamageSystem.DamageType, is_critical: bool = false, is_heal: bool = false) -> void:
+func setup(damage: int, damage_type, is_critical: bool = false, is_heal: bool = false) -> void:
 	# Set text
 	if is_heal:
 		label.text = "+" + str(damage)

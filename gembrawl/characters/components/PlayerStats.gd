@@ -12,9 +12,15 @@ var is_alive: bool = true
 var current_lives: int = 3
 var is_spectator: bool = false
 
-## References
-var player: Player3D
-var gem_data: Gem
+## References - untyped to avoid circular dependencies
+var player  # Player3D reference
+var gem_data  # Gem resource
+
+## Health getters
+var current_health: int:
+	get: return gem_data.current_health if gem_data else 100
+var max_health: int:
+	get: return gem_data.max_health if gem_data else 100
 
 ## Signals
 signal health_changed(new_health: int, max_health: int)
@@ -24,7 +30,7 @@ signal became_spectator()
 signal respawning(time_until_respawn: float)
 
 func _ready() -> void:
-	player = get_parent() as Player3D
+	player = get_parent()
 	if not player:
 		push_error("PlayerStats must be a child of Player3D")
 		queue_free()
@@ -32,7 +38,7 @@ func _ready() -> void:
 	current_lives = max_lives
 
 ## Initialize stats component
-func setup(gem: Gem) -> void:
+func setup(gem) -> void:
 	gem_data = gem
 	if gem_data:
 		health_changed.emit(gem_data.current_health, gem_data.max_health)

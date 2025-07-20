@@ -3,6 +3,9 @@
 class_name PlayerMovement
 extends Node
 
+# Ensure HexGrid is loaded and available as constant
+const HexGrid = preload("res://arena/HexGrid.gd")
+
 ## Movement settings
 @export var movement_speed: float = 5.0
 @export var acceleration: float = 10.0
@@ -26,9 +29,9 @@ var target_hex: Vector2i = Vector2i.ZERO
 var hex_move_progress: float = 0.0
 var is_moving_to_hex: bool = false
 
-## References
+## References - untyped to avoid circular dependencies
 var player: CharacterBody3D
-var arena: HexArena
+var arena  # HexArena reference
 
 ## Signals
 signal hex_entered(hex_coord: Vector2i)
@@ -40,7 +43,7 @@ func _ready() -> void:
 		queue_free()
 
 ## Initialize movement component
-func setup(arena_ref: HexArena) -> void:
+func setup(arena_ref) -> void:
 	arena = arena_ref
 	update_current_hex()
 

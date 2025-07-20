@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Gem" load_steps=2 format=3 uid="uid://ctopazgemresource"]
+
+[ext_resource type="Script" path="res://characters/Gem.gd" id="1_gem_script"]
+
+[resource]
+script = ExtResource("1_gem_script")
+gem_name = "Topaz"
+color = Color(0.9, 0.7, 0.1, 1)
+model_path = "res://assets/models/items/gem_topaz.glb"
+element = "topaz"
+max_health = 100
+current_health = 100
+base_damage = 12
+defense = 6
+magic_resistance = 15
+crit_chance_bonus = 0.1
+movement_speed = 320.0
+dash_speed = 620.0
+skill_cooldown = 3.5
+skill_damage_multiplier = 1.6

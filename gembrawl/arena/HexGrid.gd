@@ -9,11 +9,11 @@ static var HEX_HEIGHT: float = 0.0  # Y position of the grid floor
 
 ## Get the width of a hex (flat to flat distance)
 static func get_hex_width() -> float:
-	return sqrt(3.0) * HexGrid.HEX_SIZE
+	return sqrt(3.0) * HEX_SIZE
 
 ## Get the height of a hex (point to point distance)  
 static func get_hex_height() -> float:
-	return 2.0 * HexGrid.HEX_SIZE
+	return 2.0 * HEX_SIZE
 
 ## Convert axial hex coordinates to 3D world position
 ## Uses pointy-top orientation
@@ -22,16 +22,16 @@ static func hex_to_world_3d(hex_coords: Vector2i) -> Vector3:
 	var r = hex_coords.y
 	
 	# Pointy-top hex layout
-	var x = HexGrid.HEX_SIZE * (sqrt(3.0) * q + sqrt(3.0)/2.0 * r)
-	var z = HexGrid.HEX_SIZE * (3.0/2.0 * r)
+	var x = HEX_SIZE * (sqrt(3.0) * q + sqrt(3.0)/2.0 * r)
+	var z = HEX_SIZE * (3.0/2.0 * r)
 	
-	return Vector3(x, HexGrid.HEX_HEIGHT, z)
+	return Vector3(x, HEX_HEIGHT, z)
 
 ## Convert 3D world position to nearest hex coordinates
 static func world_to_hex_3d(world_pos: Vector3) -> Vector2i:
 	# Convert to fractional hex coordinates
-	var q = (sqrt(3.0)/3.0 * world_pos.x - 1.0/3.0 * world_pos.z) / HexGrid.HEX_SIZE
-	var r = (2.0/3.0 * world_pos.z) / HexGrid.HEX_SIZE
+	var q = (sqrt(3.0)/3.0 * world_pos.x - 1.0/3.0 * world_pos.z) / HEX_SIZE
+	var r = (2.0/3.0 * world_pos.z) / HEX_SIZE
 	
 	# Convert to cube coordinates for rounding
 	var s = -q - r

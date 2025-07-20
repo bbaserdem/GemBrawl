@@ -3,24 +3,31 @@
 class_name Player3D
 extends CharacterBody3D
 
+# Ensure dependencies are loaded and available as constants
+const CombatLayers = preload("res://scripts/CombatLayers.gd")
+const PlayerMovement = preload("res://characters/components/PlayerMovement.gd")
+const PlayerCombat = preload("res://characters/components/PlayerCombat.gd")
+const PlayerStats = preload("res://characters/components/PlayerStats.gd")
+const PlayerInput = preload("res://characters/components/PlayerInput.gd")
+
 ## Player properties
-@export var gem_data: Gem
+@export var gem_data: Resource  # Gem resource
 @export var player_id: int = 1
 @export var is_local_player: bool = true
 
-## Component references
-@onready var movement: PlayerMovement = $Movement
-@onready var combat: PlayerCombat = $Combat
-@onready var stats: PlayerStats = $Stats
-@onready var input: PlayerInput = $Input
+## Component references - untyped to avoid circular dependencies
+@onready var movement = $Movement
+@onready var combat = $Combat
+@onready var stats = $Stats
+@onready var input = $Input
 
 ## Visual nodes
 @onready var mesh_instance: MeshInstance3D = $MeshInstance3D
 @onready var collision_shape: CollisionShape3D = $CollisionShape3D
 @onready var direction_indicator: Node3D = $DirectionArrow
 
-## Arena reference
-var arena: HexArena
+## Arena reference - untyped to avoid circular dependencies
+var arena
 
 ## Quick access to state (delegated to components)
 var is_alive: bool:
@@ -40,10 +47,21 @@ signal hex_entered(hex_coord: Vector2i)
 signal lives_changed(new_lives: int, max_lives: int)
 signal became_spectator()
 signal respawning(time_until_respawn: float)
-signal damage_dealt(damage_info: DamageSystem.DamageInfo)
-signal damage_received(damage_info: DamageSystem.DamageInfo)
+signal damage_dealt(damage_info)
+signal damage_received(damage_info)
 
 func _ready() -> void:
+	# Debug: Check if scene components loaded properly
+	print("=== Player3D Component Loading Debug ===")
+	print("movement: ", movement, " type: ", type_string(typeof(movement)) if movement else "null")
+	print("combat: ", combat, " type: ", type_string(typeof(combat)) if combat else "null")
+	print("stats: ", stats, " type: ", type_string(typeof(stats)) if stats else "null")
+	print("input: ", input, " type: ", type_string(typeof(input)) if input else "null")
+	
+	if movement:
+		print("movement has process_movement: ", movement.has_method("process_movement"))
+		print("movement script: ", movement.get_script())
+	
 	# Add components if they don't exist
 	_ensure_components()
 	
@@ -73,25 +91,48 @@ func _ready() -> void:
 
 ## Ensure all components exist
 func _ensure_components() -> void:
+	print("=== Ensuring Components ===")
+	
 	if not movement:
+		print("Creating new movement component")
 		movement = PlayerMovement.new()
 		movement.name = "Movement"
 		add_child(movement)
+	else:
+		print("Movement component already exists from scene")
 	
 	if not combat:
+		print("Creating new combat component")
 		combat = PlayerCombat.new()
 		combat.name = "Combat"
 		add_child(combat)
+	else:
+		print("Combat component already exists from scene")
 	
 	if not stats:
+		print("Creating new stats component")
 		stats = PlayerStats.new()
 		stats.name = "Stats"
 		add_child(stats)
+	else:
+		print("Stats component already exists from scene")
 	
 	if not input:
+		print("Creating new input component")
 		input = PlayerInput.new()
 		input.name = "Input"
 		add_child(input)
+	else:
+		print("Input component already exists from scene")
+
+## Public setup method for external initialization
+func setup(arena_ref) -> void:
+	arena = arena_ref
+	# Ensure all components are initialized even if arena is null
+	_setup_components()
+	# Make sure stats are initialized with gem data
+	if stats and gem_data and not stats.gem_data:
+		stats.setup(gem_data)
 
 ## Setup components with initial data
 func _setup_components() -> void:
@@ -142,7 +183,7 @@ func _apply_gem_properties() -> void:
 			mesh_instance.material_override = material
 
 ## Apply enhanced materials to gem models based on gem type
-func _apply_gem_material_enhancements(node: Node, gem_data: Gem) -> void:
+func _apply_gem_material_enhancements(node: Node, gem_data) -> void:
 	if node is MeshInstance3D:
 		var mesh_instance = node as MeshInstance3D
 		
@@ -260,7 +301,7 @@ func take_damage(damage: int, attacker: Node3D = null) -> void:
 		stats.handle_defeat()
 
 ## Take damage using the new damage system
-func take_damage_info(damage_info: DamageSystem.DamageInfo) -> void:
+func take_damage_info(damage_info) -> void:
 	if not combat or not stats:
 		return
 	
@@ -269,12 +310,35 @@ func take_damage_info(damage_info: DamageSystem.DamageInfo) -> void:
 		stats.handle_defeat()
 
 ## Get defense value against specific damage type
-func get_defense_against(damage_type: DamageSystem.DamageType) -> int:
+func get_defense_against(damage_type) -> int:
 	return combat.get_defense_against(damage_type) if combat else 0
 
 ## Get this player's element type
 func get_element() -> String:
 	return combat.get_element() if combat else ""
+
+## Visual feedback for taking damage
+func flash_damage() -> void:
+	if not mesh_instance:
+		return
+	
+	# Store original material
+	var original_mat = mesh_instance.material_override
+	
+	# Create flash material
+	var flash_mat = StandardMaterial3D.new()
+	flash_mat.albedo_color = Color(1.0, 0.3, 0.3, 1.0)
+	flash_mat.emission_enabled = true
+	flash_mat.emission = Color(1.0, 0.0, 0.0)
+	flash_mat.emission_energy = 2.0
+	
+	# Apply flash
+	mesh_instance.material_override = flash_mat
+	
+	# Return to original after delay
+	await get_tree().create_timer(0.2).timeout
+	if is_instance_valid(mesh_instance):
+		mesh_instance.material_override = original_mat
 
 ## Use the gem's special skill
 func use_skill() -> void:
@@ -298,10 +362,10 @@ func set_hex_position(hex_coord: Vector2i) -> void:
 func _on_hex_entered(hex_coord: Vector2i) -> void:
 	hex_entered.emit(hex_coord)
 
-func _on_damage_dealt(damage_info: DamageSystem.DamageInfo) -> void:
+func _on_damage_dealt(damage_info) -> void:
 	damage_dealt.emit(damage_info)
 
-func _on_damage_received(damage_info: DamageSystem.DamageInfo) -> void:
+func _on_damage_received(damage_info) -> void:
 	damage_received.emit(damage_info)
 
 func _on_skill_used() -> void:

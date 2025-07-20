@@ -3,6 +3,9 @@
 class_name PlayerCombat
 extends Node
 
+# Ensure DamageSystem is loaded and available as constant
+const DamageSystem = preload("res://scripts/DamageSystem.gd")
+
 ## Combat settings
 @export var invulnerability_duration: float = 0.5
 
@@ -11,23 +14,23 @@ var invulnerable: bool = false
 var skill_ready: bool = true
 var skill_cooldown_timer: float = 0.0
 
-## References
-var player: Player3D
-var gem_data: Gem
+## References - untyped to avoid circular dependencies
+var player  # Player3D reference
+var gem_data  # Gem resource
 
-## Signals
-signal damage_dealt(damage_info: DamageSystem.DamageInfo)
-signal damage_received(damage_info: DamageSystem.DamageInfo)
+## Signals - untyped parameters to avoid dependency issues
+signal damage_dealt(damage_info)
+signal damage_received(damage_info)
 signal skill_used()
 
 func _ready() -> void:
-	player = get_parent() as Player3D
+	player = get_parent()
 	if not player:
 		push_error("PlayerCombat must be a child of Player3D")
 		queue_free()
 
 ## Initialize combat component
-func setup(gem: Gem) -> void:
+func setup(gem) -> void:
 	gem_data = gem
 
 ## Process combat updates
@@ -53,7 +56,7 @@ func take_damage(damage: int, attacker: Node3D = null) -> bool:
 	return is_defeated
 
 ## Take damage using the new damage system
-func take_damage_info(damage_info: DamageSystem.DamageInfo) -> bool:
+func take_damage_info(damage_info) -> bool:
 	if invulnerable or not player.is_alive or player.is_spectator:
 		damage_info.damage_dealt = 0
 		return false
@@ -78,7 +81,7 @@ func take_damage_info(damage_info: DamageSystem.DamageInfo) -> bool:
 	return is_defeated
 
 ## Get defense value against specific damage type
-func get_defense_against(damage_type: DamageSystem.DamageType) -> int:
+func get_defense_against(damage_type) -> int:
 	if not gem_data:
 		return 0
 	
@@ -123,7 +126,7 @@ func _apply_invulnerability_visual(duration: float) -> void:
 			tween.tween_property(material, "albedo_color:a", 1.0, 0.125)
 
 ## Show damage number effect
-func _show_damage_number(damage_info: DamageSystem.DamageInfo) -> void:
+func _show_damage_number(damage_info) -> void:
 	var damage_number_scene = preload("res://effects/DamageNumber.tscn")
 	var damage_number = damage_number_scene.instantiate()
 	player.get_tree().current_scene.add_child(damage_number)

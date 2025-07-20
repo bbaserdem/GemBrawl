@@ -4,6 +4,11 @@
 class_name HexArena
 extends Node3D
 
+# Ensure dependencies are loaded and available as constants
+const HexGrid = preload("res://arena/HexGrid.gd")
+const HazardTile = preload("res://arena/HazardTile.gd")
+const SpawnPointVisual = preload("res://arena/SpawnPointVisual.gd")
+
 ## Arena configuration
 @export var arena_radius: int = 7
 @export var hex_size: float = 1.0
@@ -151,6 +156,10 @@ func generate_hazards() -> void:
 	var attempts = 0
 	var max_attempts = hazard_count * 10
 	
+	# Distribute hazard types (70% lava, 30% spikes)
+	var spike_count = int(hazard_count * 0.3)
+	var lava_count = hazard_count - spike_count
+	
 	while placed < hazard_count and attempts < max_attempts:
 		attempts += 1
 		
@@ -164,37 +173,62 @@ func generate_hazards() -> void:
 			
 			# Check if not already occupied
 			if not hazard_tiles.has(hex_coord):
-				# Create static body for hazard collision
-				var hazard_body = StaticBody3D.new()
+				# Determine hazard type
+				var is_spike = placed < spike_count
+				
+				# Create hazard tile
+				var hazard_tile = HazardTile.new()
+				hazard_tile.hazard_type = HazardTile.HazardType.SPIKE if is_spike else HazardTile.HazardType.LAVA
+				
+				# Position hazard
 				var base_pos = HexGrid.hex_to_world_3d(hex_coord)
-				# Add hazard height offset - smaller to not block movement
+				hazard_tile.position = base_pos
+				
+				# Create floor tile for hazard (visual base)
+				var hazard_body = StaticBody3D.new()
 				hazard_body.position = base_pos + Vector3(0, hazard_height_offset, 0)
 				
-				# Add mesh
+				# Add mesh for floor tile
 				var hazard_mesh = MeshInstance3D.new()
 				hazard_mesh.mesh = hex_mesh
 				
-				# Apply hazard material
-				if hazard_material:
-					hazard_mesh.material_override = hazard_material
-				else:
+				# Apply hazard material based on type
+				if is_spike:
 					var mat = StandardMaterial3D.new()
-					mat.albedo_color = Color(1.0, 0.3, 0.0)  # Lava color
-					mat.emission_enabled = true
-					mat.emission = Color(1.0, 0.5, 0.0)
-					mat.emission_energy = 0.5
+					mat.albedo_color = Color(0.4, 0.4, 0.5)  # Dark gray for spike tiles
+					mat.roughness = 0.8
 					hazard_mesh.material_override = mat
+				else:
+					if hazard_material:
+						hazard_mesh.material_override = hazard_material
+					else:
+						var mat = StandardMaterial3D.new()
+						mat.albedo_color = Color(1.0, 0.3, 0.0)  # Lava color
+						mat.emission_enabled = true
+						mat.emission = Color(1.0, 0.5, 0.0)
+						mat.emission_energy = 0.5
+						hazard_mesh.material_override = mat
 				
-				# Add collision shape
+				# Set hazard tile mesh
+				hazard_tile.mesh_instance = hazard_mesh
+				
+				# Add collision shape for floor
 				var collision_shape = CollisionShape3D.new()
 				collision_shape.shape = _create_hex_collision_shape()
-				# Position collision shape to match the tile thickness
 				collision_shape.position.y = tile_thickness / 2
+				
+				# Add hazard collision area
+				var hazard_collision = CollisionShape3D.new()
+				hazard_collision.shape = _create_hex_collision_shape()
+				hazard_collision.position.y = tile_thickness / 2
 				
 				hazard_body.add_child(hazard_mesh)
 				hazard_body.add_child(collision_shape)
+				hazard_tile.add_child(hazard_collision)
+				
 				add_child(hazard_body)
-				hazard_tiles[hex_coord] = hazard_body
+				add_child(hazard_tile)
+				hazard_tiles[hex_coord] = hazard_tile
 				placed += 1
 
 ## Generate spawn points for players
@@ -222,15 +256,43 @@ func generate_spawn_points() -> void:
 		var world_pos = Vector3(x, 0, z)
 		var hex_coord = HexGrid.world_to_hex_3d(world_pos)
 		
-		# Ensure it's within bounds
-		if abs(hex_coord.x + hex_coord.y) <= arena_radius:
-			var spawn_marker = Marker3D.new()
-			spawn_marker.name = "SpawnPoint" + str(i + 1)
-			spawn_marker.position = HexGrid.hex_to_world_3d(hex_coord)
-			spawn_marker.position.y = 0.5  # Slightly above floor
+		# Ensure it's within bounds and not on a hazard
+		if abs(hex_coord.x + hex_coord.y) <= arena_radius and not is_hazard_hex(hex_coord):
+			# If the spawn point is on a hazard, try to find a nearby safe hex
+			if is_hazard_hex(hex_coord):
+				var found_safe = false
+				# Check surrounding hexes
+				var neighbors = HexGrid.get_hex_neighbors(hex_coord)
+				for neighbor in neighbors:
+					if is_valid_hex(neighbor) and not is_hazard_hex(neighbor):
+						hex_coord = neighbor
+						found_safe = true
+						break
+				
+				# If no safe neighbor found, skip this spawn point
+				if not found_safe:
+					continue
 			
-			add_child(spawn_marker)
-			spawn_points.append(spawn_marker)
+			# Create spawn point with visual indicator
+			var spawn_visual = SpawnPointVisual.new()
+			spawn_visual.name = "SpawnPoint" + str(i + 1)
+			spawn_visual.position = HexGrid.hex_to_world_3d(hex_coord)
+			spawn_visual.position.y = 0.5  # Slightly above floor
+			
+			# Set player-specific color
+			var colors = [
+				Color(1.0, 0.2, 0.2, 0.5),  # Red for Player 1
+				Color(0.2, 0.2, 1.0, 0.5),  # Blue for Player 2
+				Color(0.2, 1.0, 0.2, 0.5),  # Green for Player 3
+				Color(1.0, 1.0, 0.2, 0.5)   # Yellow for Player 4
+			]
+			
+			# Apply color to the visual
+			if spawn_visual.has_method("set_spawn_color"):
+				spawn_visual.set_spawn_color(colors[i])
+			
+			add_child(spawn_visual)
+			spawn_points.append(spawn_visual)
 
 ## Get a random valid spawn position
 func get_random_spawn_position() -> Vector3:

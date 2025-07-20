@@ -8,8 +8,8 @@ extends Node
 @export var enable_gamepad: bool = true
 @export var enable_keyboard: bool = true
 
-## References
-var player: Player3D
+## References - untyped to avoid circular dependencies
+var player  # Player3D reference
 
 ## Cached input state
 var current_movement_input: Vector2 = Vector2.ZERO
@@ -17,8 +17,8 @@ var is_jump_pressed: bool = false
 var is_skill_pressed: bool = false
 
 func _ready() -> void:
-	player = get_parent() as Player3D
-	if not player:
+	player = get_parent()
+	if not player or not player.has_method("get_class"):
 		push_error("PlayerInput must be a child of Player3D")
 		queue_free()
 	

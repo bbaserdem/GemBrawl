@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode cull_disabled, unshaded;
+render_mode cull_disabled, depth_draw_opaque, depth_prepass_alpha, vertex_lighting;
 
 // Gem properties
 uniform vec4 gem_color : source_color = vec4(0.9, 0.15, 0.2, 1.0);
@@ -14,17 +14,21 @@ uniform float outline_width : hint_range(0.0, 0.1) = 0.02;
 
 // Store world position
 varying vec3 world_pos;
+varying vec3 world_normal;
 
 void vertex() {
     world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
-    // Scale vertices slightly outward for outline effect
-    vec4 clip_position = PROJECTION_MATRIX * (VIEW_MATRIX * MODEL_MATRIX * vec4(VERTEX, 1.0));
-    vec3 clip_normal = mat3(PROJECTION_MATRIX) * (mat3(VIEW_MATRIX) * mat3(MODEL_MATRIX) * NORMAL);
+    world_normal = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
     
-    vec2 offset = normalize(clip_normal.xy) * outline_width * clip_position.w;
-    clip_position.xy += offset;
+    // Simple outline by pushing vertices along normals in view space
+    vec4 view_pos = VIEW_MATRIX * MODEL_MATRIX * vec4(VERTEX, 1.0);
+    vec3 view_normal = normalize((VIEW_MATRIX * MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
     
-    POSITION = clip_position;
+    // Push vertices outward for outline
+    view_pos.xyz += view_normal * outline_width;
+    
+    // Transform back to clip space
+    POSITION = PROJECTION_MATRIX * view_pos;
 }
 
 // Calculate flat normal from world position
@@ -38,7 +42,10 @@ void fragment() {
     // Get flat normal for faceted appearance
     vec3 flat_normal = get_flat_normal();
     
-    // Simple directional light calculation
+    // Use the flat normal for proper shading
+    NORMAL = flat_normal;
+    
+    // Get light information from Godot's built-in lighting
     vec3 light_dir = normalize(vec3(0.5, 0.7, 0.3));
     float NdotL = dot(flat_normal, light_dir);
     
@@ -62,4 +69,6 @@ void fragment() {
     }
     
     ALBEDO = color;
+    ROUGHNESS = 0.8;
+    METALLIC = 0.0;
 }

@@ -7,9 +7,9 @@
       "command": "uvx",
       "args": [ "blender-mcp" ]
     },
-    "image-generator": {
+    "openai-gpt-image-mcp": {
       "command": "npx",
-      "args": [ "image-generator" ]
+      "args": ["ts-node", "node_modules/openai-gpt-image-mcp/src/index.ts"]
     }
   }
 }

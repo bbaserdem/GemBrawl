@@ -1,6 +1,7 @@
 {
   "dependencies": {
-    "image-generator": "github:sammyl720/image-generator-mcp-server",
-    "task-master-ai": "^0.20.0"
+    "openai-gpt-image-mcp": "github:SureScaleAI/openai-gpt-image-mcp",
+    "task-master-ai": "^0.20.0",
+    "ts-node": "^10.9.2"
   }
 }

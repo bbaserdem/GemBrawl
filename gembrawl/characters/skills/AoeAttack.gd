@@ -3,9 +3,13 @@
 class_name AoeAttack
 extends Node3D
 
+# Import dependencies
+const CombatLayers = preload("res://scripts/CombatLayers.gd")
+const DamageSystem = preload("res://scripts/DamageSystem.gd")
+
 ## AoE properties
 @export var damage: int = 30
-@export var damage_type: DamageSystem.DamageType = DamageSystem.DamageType.ELEMENTAL
+@export var damage_type: int = 3  ## DamageSystem.DamageType (0=PHYSICAL, 1=MAGICAL, 2=TRUE, 3=ELEMENTAL)
 @export var radius: float = 3.0
 @export var delay_before_damage: float = 0.5  # Warning time before damage
 @export var duration: float = 0.1  # How long the damage zone is active
@@ -29,7 +33,7 @@ enum Shape {
 @export var ring_inner_radius: float = 1.0  # For ring shape
 
 ## Internal state
-var owner_player: Player3D
+var owner_player  ## IPlayer
 var targets_hit: Array[Node3D] = []
 var is_active: bool = false
 var damage_timer: float = 0.0
@@ -63,7 +67,7 @@ func _ready() -> void:
 ## @param player: The player who created this AoE
 ## @param position: World position to spawn the AoE
 ## @param facing: Direction the AoE should face (for cone/line shapes)
-func setup(player: Player3D, position: Vector3, facing: Vector3 = Vector3.FORWARD) -> void:
+func setup(player, position: Vector3, facing: Vector3 = Vector3.FORWARD) -> void:  ## player: IPlayer
 	owner_player = player
 	global_position = position
 	look_at(position + facing, Vector3.UP)
@@ -267,7 +271,7 @@ func _deactivate() -> void:
 	queue_free()
 
 ## Create an AoE attack
-static func create_aoe(scene: PackedScene, owner: Player3D, 
+static func create_aoe(scene: PackedScene, owner,  ## owner: IPlayer
 		position: Vector3, facing: Vector3 = Vector3.FORWARD) -> AoeAttack:
 	var aoe = scene.instantiate() as AoeAttack
 	# Get the current scene to add AoE to

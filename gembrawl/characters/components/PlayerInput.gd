@@ -8,20 +8,17 @@ extends Node
 @export var enable_gamepad: bool = true
 @export var enable_keyboard: bool = true
 
-## References - untyped to avoid circular dependencies
-var player  # Player3D reference
+## References
+var player  ## IPlayer interface - injected from parent
 
 ## Cached input state
 var current_movement_input: Vector2 = Vector2.ZERO
 var is_jump_pressed: bool = false
 var is_skill_pressed: bool = false
 
+# Player is now injected from parent instead of getting from get_parent()
+
 func _ready() -> void:
-	player = get_parent()
-	if not player or not player.has_method("get_class"):
-		push_error("PlayerInput must be a child of Player3D")
-		queue_free()
-	
 	set_process_unhandled_input(true)
 
 ## Get movement input from player
@@ -82,7 +79,7 @@ func get_camera_relative_movement(input_vector: Vector2) -> Vector3:
 	if input_vector.length() == 0:
 		return Vector3.ZERO
 	
-	var camera = player.get_viewport().get_camera_3d()
+	var camera = player.get_viewport().get_camera_3d() if player else null
 	if not camera:
 		return Vector3(input_vector.x, 0, input_vector.y)
 	

@@ -2,6 +2,9 @@
 ## Tests melee, projectile, and AoE collision detection
 extends Node3D
 
+# Import dependencies
+const DamageSystem = preload("res://scripts/DamageSystem.gd")
+
 ## Player management
 @export var player_count: int = 2
 @export var spawn_radius: float = 5.0
@@ -20,7 +23,7 @@ const Projectile = preload("res://characters/skills/Projectile.gd")
 const AoeAttack = preload("res://characters/skills/AoeAttack.gd")
 
 ## References
-var players: Array[Player3D] = []
+var players: Array = []  ## Array[IPlayer]
 var current_player_index: int = 0
 var combat_manager: Node
 var active_debug_markers: Array[Node3D] = []  # Track active markers for cleanup
@@ -138,7 +141,7 @@ func _create_combat_ui() -> void:
 
 func _create_players() -> void:
 	for i in player_count:
-		var player = player_scene.instantiate() as Player3D
+		var player = player_scene.instantiate()  ## as IPlayer (Player3D)
 		player.player_id = i + 1
 		player.name = "Player" + str(i + 1)
 		player.is_local_player = (i == 0)  # Only first player is controlled
@@ -244,7 +247,7 @@ func _test_melee_attack() -> void:
 	# Setup hitbox
 	hitbox.setup(attacker)
 	hitbox.damage = 20  # Set damage
-	hitbox.damage_type = DamageSystem.DamageType.PHYSICAL  # Use PHYSICAL instead of SLASH
+	hitbox.damage_type = 0  # DamageSystem.DamageType.PHYSICAL
 	
 	# Activate the hitbox
 	hitbox.activate()
@@ -414,27 +417,27 @@ GAMEPAD CAMERA:
 	debug_label.text = "Players created: %d | Arena: %s" % [players.size(), "Ready" if arena else "Not Found"]
 
 ## Signal handlers
-func _on_combat_hit(attacker: Node3D, target: Node3D, damage_info: DamageSystem.DamageInfo) -> void:
+func _on_combat_hit(attacker: Node3D, target: Node3D, damage_info: Dictionary) -> void:  ## damage_info is DamageSystem.DamageInfo
 	var final_damage = damage_info.damage_dealt if damage_info.damage_dealt > 0 else damage_info.final_damage
 	print("Combat Hit: %s hit %s for %d damage (%s)" % [
 		attacker.name, 
 		target.name, 
 		final_damage,
-		DamageSystem.DamageType.keys()[damage_info.damage_type]
+		["PHYSICAL", "MAGICAL", "TRUE", "ELEMENTAL"][damage_info.get("damage_type", 0)]
 	])
 	debug_label.text = "Last hit: %s → %s (%d damage)" % [attacker.name, target.name, final_damage]
 
-func _on_player_killed(victim: Player3D, killer: Node3D) -> void:
+func _on_player_killed(victim, killer: Node3D) -> void:  ## victim: IPlayer
 	print("Player killed: %s by %s" % [victim.name, killer.name if killer else "environment"])
 
-func _on_player_health_changed(new_health: int, max_health: int, player: Player3D) -> void:
+func _on_player_health_changed(new_health: int, max_health: int, player) -> void:  ## player: IPlayer
 	print("Player %d health: %d/%d" % [player.player_id, new_health, max_health])
 
-func _on_damage_dealt(damage_info: DamageSystem.DamageInfo, player: Player3D) -> void:
+func _on_damage_dealt(damage_info: Dictionary, player) -> void:  ## damage_info is DamageSystem.DamageInfo, player: IPlayer
 	var damage_amount = damage_info.damage_dealt if damage_info.damage_dealt > 0 else damage_info.final_damage
 	print("Player %d dealt %d damage" % [player.player_id, damage_amount])
 
-func _on_damage_received(damage_info: DamageSystem.DamageInfo, player: Player3D) -> void:
+func _on_damage_received(damage_info: Dictionary, player) -> void:  ## damage_info is DamageSystem.DamageInfo, player: IPlayer
 	var damage_amount = damage_info.damage_dealt if damage_info.damage_dealt > 0 else damage_info.final_damage
 	print("Player %d received %d damage" % [player.player_id, damage_amount])
 
@@ -490,11 +493,11 @@ func _exit_tree() -> void:
 			marker.queue_free()
 	active_debug_markers.clear()
 
-func _on_melee_hit(target: Node3D, damage_info: DamageSystem.DamageInfo) -> void:
+func _on_melee_hit(target: Node3D, damage_info: Dictionary) -> void:  ## damage_info is DamageSystem.DamageInfo
 	print("Melee hit target: ", target.name)
 
-func _on_projectile_hit(target: Node3D, damage_info: DamageSystem.DamageInfo) -> void:
-	var damage = damage_info.get_final_damage()
+func _on_projectile_hit(target: Node3D, damage_info: Dictionary) -> void:  ## damage_info is DamageSystem.DamageInfo
+	var damage = damage_info.get("final_damage", damage_info.get("damage", 0))
 	print("Projectile hit target: ", target.name, " for ", damage, " damage")
 	status_label.text = "Hit %s for %d damage!" % [target.name, damage]
 

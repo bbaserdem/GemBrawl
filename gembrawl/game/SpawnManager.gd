@@ -15,7 +15,7 @@ class SpawnPoint extends RefCounted:
 	var node: Node3D
 	var position: Vector3
 	var is_occupied: bool = false
-	var assigned_player: Player3D = null  # Player assigned to this spawn point
+	var assigned_player = null  ## IPlayer - Player assigned to this spawn point
 	var last_used_time: float = 0.0
 	var index: int = -1  # Spawn point index for identification
 	
@@ -70,7 +70,7 @@ func _register_spawn_points() -> void:
 	print("SpawnManager: Registered %d spawn points" % spawn_points.size())
 
 ## Get the best spawn point based on current mode and conditions
-func get_spawn_point(player: Player3D) -> Vector3:
+func get_spawn_point(player) -> Vector3:  ## player: IPlayer
 	var selected_spawn: SpawnPoint
 	
 	match spawn_mode:
@@ -121,7 +121,7 @@ func _get_available_spawn_points() -> Array[SpawnPoint]:
 	return available
 
 ## Assign a spawn point to a player
-func _assign_spawn_point(player: Player3D) -> SpawnPoint:
+func _assign_spawn_point(player) -> SpawnPoint:  ## player: IPlayer
 	# Find an unassigned spawn point
 	for spawn in spawn_points:
 		if spawn.assigned_player == null:
@@ -143,13 +143,13 @@ func _get_random_spawn(spawns: Array[SpawnPoint]) -> SpawnPoint:
 	return spawns[randi() % spawns.size()]
 
 ## Get spawn farthest from all other players
-func _get_farthest_spawn(spawns: Array[SpawnPoint], player: Player3D) -> SpawnPoint:
+func _get_farthest_spawn(spawns: Array[SpawnPoint], player) -> SpawnPoint:  ## player: IPlayer
 	var all_players = get_tree().get_nodes_in_group("players")
 	
 	# Remove self from list
 	var other_players: Array = []
 	for p in all_players:
-		if p != player and p.is_alive:
+		if p != player and p.is_alive():
 			other_players.append(p)
 	
 	if other_players.is_empty():
@@ -161,7 +161,7 @@ func _get_farthest_spawn(spawns: Array[SpawnPoint], player: Player3D) -> SpawnPo
 	for spawn in spawns:
 		var min_distance = INF
 		for other_player in other_players:
-			var distance = spawn.position.distance_to(other_player.global_position)
+			var distance = spawn.position.distance_to(other_player.get_global_position())
 			min_distance = min(min_distance, distance)
 		
 		if min_distance > best_distance:
@@ -179,7 +179,7 @@ func _get_sequential_spawn(spawns: Array[SpawnPoint]) -> SpawnPoint:
 
 
 ## Request respawn for a player
-func request_respawn(player: Player3D, delay: float = -1.0) -> void:
+func request_respawn(player, delay: float = -1.0) -> void:  ## player: IPlayer
 	print("SpawnManager: Respawn requested for player")
 	if delay < 0:
 		delay = spawn_cooldown
@@ -196,7 +196,7 @@ func request_respawn(player: Player3D, delay: float = -1.0) -> void:
 	_start_respawn_timer(player, delay)
 
 ## Start respawn timer for a player
-func _start_respawn_timer(player: Player3D, delay: float) -> void:
+func _start_respawn_timer(player, delay: float) -> void:  ## player: IPlayer
 	print("SpawnManager: Starting respawn timer for ", delay, " seconds")
 	if active_respawn_timers.has(player):
 		print("SpawnManager: Player already respawning!")
@@ -289,7 +289,7 @@ func get_spawn_points_info() -> Dictionary:
 	return info
 
 ## Cycle a player to the next available spawn point (for testing)
-func cycle_player_spawn(player: Player3D) -> void:
+func cycle_player_spawn(player) -> void:  ## player: IPlayer
 	print("SpawnManager: cycle_player_spawn called, spawn_points size: ", spawn_points.size())
 	if not spawn_points.is_empty():
 		var current_spawn = player_spawn_assignments.get(player)

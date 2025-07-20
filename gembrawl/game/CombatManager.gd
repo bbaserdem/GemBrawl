@@ -2,6 +2,10 @@
 ## Manages global combat state, hit registration, and combat events
 extends Node
 
+# Import dependencies
+const Projectile = preload("res://characters/skills/Projectile.gd")
+const AoeAttack = preload("res://characters/skills/AoeAttack.gd")
+
 ## Combat settings
 @export var friendly_fire: bool = true
 @export var combo_window: float = 2.0
@@ -13,9 +17,9 @@ var active_aoes: Array[AoeAttack] = []
 var recent_hits: Array[Dictionary] = []  # Track recent hits for combos
 
 ## Signals
-signal combat_hit(attacker: Node3D, target: Node3D, damage_info: DamageSystem.DamageInfo)
-signal player_killed(victim: Player3D, killer: Node3D)
-signal combo_achieved(player: Player3D, combo_count: int)
+signal combat_hit(attacker: Node3D, target: Node3D, damage_info: Dictionary)  ## damage_info is DamageSystem.DamageInfo
+signal player_killed(victim, killer: Node3D)  ## victim: IPlayer
+signal combo_achieved(player, combo_count: int)  ## player: IPlayer
 
 func _ready() -> void:
 	pass
@@ -26,9 +30,9 @@ func _ready() -> void:
 ## @param attacker: The node dealing damage
 ## @param target: The node receiving damage
 ## @param damage_info: Damage information including type, amount, and modifiers
-func register_hit(attacker: Node3D, target: Node3D, damage_info: DamageSystem.DamageInfo) -> void:
+func register_hit(attacker: Node3D, target: Node3D, damage_info: Dictionary) -> void:  ## damage_info is DamageSystem.DamageInfo
 	# Apply global damage multiplier
-	damage_info.multiplier *= global_damage_multiplier
+	damage_info["multiplier"] = damage_info.get("multiplier", 1.0) * global_damage_multiplier
 	
 	# Check friendly fire
 	if not friendly_fire and _are_teammates(attacker, target):
@@ -38,9 +42,9 @@ func register_hit(attacker: Node3D, target: Node3D, damage_info: DamageSystem.Da
 	var hit_data = {
 		"attacker": attacker,
 		"target": target,
-		"damage": damage_info.get_final_damage(),
+		"damage": damage_info.get("final_damage", damage_info.get("damage", 0)),
 		"time": Time.get_ticks_msec() / 1000.0,
-		"skill_name": damage_info.skill_name
+		"skill_name": damage_info.get("skill_name", "")
 	}
 	recent_hits.append(hit_data)
 	
@@ -57,7 +61,7 @@ func register_hit(attacker: Node3D, target: Node3D, damage_info: DamageSystem.Da
 ## Cleans up victim's active projectiles/AoEs and emits death signal
 ## @param victim: The player who died
 ## @param killer: The node that caused the death (optional)
-func register_player_death(victim: Player3D, killer: Node3D = null) -> void:
+func register_player_death(victim, killer: Node3D = null) -> void:  ## victim: IPlayer
 	player_killed.emit(victim, killer)
 	
 	# Clear victim's projectiles

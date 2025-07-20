@@ -93,37 +93,47 @@ func _ready() -> void:
 func _ensure_components() -> void:
 	print("=== Ensuring Components ===")
 	
+	# Pass self to components (they expect IPlayer interface)
+	
 	if not movement:
 		print("Creating new movement component")
 		movement = PlayerMovement.new()
 		movement.name = "Movement"
 		add_child(movement)
+		movement.player = self
 	else:
 		print("Movement component already exists from scene")
+		movement.player = self
 	
 	if not combat:
 		print("Creating new combat component")
 		combat = PlayerCombat.new()
 		combat.name = "Combat"
 		add_child(combat)
+		combat.player = self
 	else:
 		print("Combat component already exists from scene")
+		combat.player = self
 	
 	if not stats:
 		print("Creating new stats component")
 		stats = PlayerStats.new()
 		stats.name = "Stats"
 		add_child(stats)
+		stats.player = self
 	else:
 		print("Stats component already exists from scene")
+		stats.player = self
 	
 	if not input:
 		print("Creating new input component")
 		input = PlayerInput.new()
 		input.name = "Input"
 		add_child(input)
+		input.player = self
 	else:
 		print("Input component already exists from scene")
+		input.player = self
 
 ## Public setup method for external initialization
 func setup(arena_ref) -> void:
@@ -385,3 +395,25 @@ func _on_became_spectator() -> void:
 
 func _on_respawning(time_until_respawn: float) -> void:
 	respawning.emit(time_until_respawn)
+
+## Additional helper methods for components
+func get_arena() -> Node:
+	return arena
+
+func get_player_id() -> int:
+	return player_id
+
+func get_stats() -> Node:
+	return stats
+
+func get_combat() -> Node:
+	return combat
+
+func get_movement() -> Node:
+	return movement
+
+func get_input() -> Node:
+	return input
+
+# These methods are not needed as they duplicate built-in functionality
+# Use the built-in properties directly: visible, collision_layer, collision_mask

@@ -3,6 +3,9 @@
 class_name SkillBase
 extends Node
 
+# Import dependencies
+const DamageSystem = preload("res://scripts/DamageSystem.gd")
+
 ## Skill properties
 @export var skill_name: String = "Basic Skill"
 @export var description: String = ""
@@ -20,7 +23,7 @@ extends Node
 
 ## Skill state
 var is_active: bool = false
-var owner_player: Player3D
+var owner_player  ## IPlayer
 
 ## Signals
 signal skill_started()
@@ -28,12 +31,12 @@ signal skill_ended()
 signal hit_target(target: Node3D, damage: int)
 
 ## Initialize the skill with its owner
-func setup(player: Player3D) -> void:
+func setup(player) -> void:  ## player: IPlayer
 	owner_player = player
 
 ## Execute the skill - to be overridden by specific skills
 func execute() -> void:
-	if not owner_player or not owner_player.is_alive:
+	if not owner_player or not owner_player.is_alive():
 		return
 	
 	is_active = true
@@ -72,7 +75,7 @@ func apply_damage_to_target(target: Node3D, damage_multiplier: float = 1.0) -> v
 		hit_target.emit(target, final_damage)
 
 ## Apply damage using the new damage system
-func apply_damage_info(target: Node3D, damage_type: DamageSystem.DamageType = DamageSystem.DamageType.PHYSICAL, 
+func apply_damage_info(target: Node3D, damage_type: int = 0,  ## DamageSystem.DamageType (0=PHYSICAL) 
 		damage_multiplier: float = 1.0) -> void:
 	if not target or not target.has_method("take_damage_info"):
 		return

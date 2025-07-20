@@ -1,10 +1,6 @@
 ## Combat manager for GemBrawl
 ## Manages global combat state, hit registration, and combat events
-class_name CombatManager
 extends Node
-
-## Singleton reference
-static var instance: CombatManager
 
 ## Combat settings
 @export var friendly_fire: bool = true
@@ -22,7 +18,7 @@ signal player_killed(victim: Player3D, killer: Node3D)
 signal combo_achieved(player: Player3D, combo_count: int)
 
 func _ready() -> void:
-	instance = self
+	pass
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
 ## Register a combat hit

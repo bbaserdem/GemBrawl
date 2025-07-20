@@ -31,7 +31,7 @@ func _apply_ruby_material(node: Node):
 		print("Found MeshInstance3D: ", mesh_instance.name)
 		
 		# Try different shader approaches
-		var shader_mode = "crystal"  # Options: "faceted", "outlined", "crystal", "standard"
+		var shader_mode = "transmission"  # Options: "faceted", "outlined", "crystal", "standard", "transmission"
 		
 		match shader_mode:
 			"faceted":
@@ -103,6 +103,12 @@ func _apply_ruby_material(node: Node):
 			
 			"standard":
 				_apply_standard_ruby_material(mesh_instance)
+			
+			"transmission":
+				# Use the configured gem material from the import settings
+				# This ensures we're testing the actual material that will be used in-game
+				print("Using imported material configuration")
+				# Don't override - let the import settings handle the material
 	
 	# Recursively check children
 	for child in node.get_children():

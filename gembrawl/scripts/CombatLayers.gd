@@ -51,4 +51,7 @@ static func setup_combat_body(body: PhysicsBody3D, layer: Layer) -> void:
 ## Configure an area for combat detection
 static func setup_combat_area(area: Area3D, layer: Layer) -> void:
 	area.collision_layer = get_layer_bit(layer)
-	area.collision_mask = get_combat_mask(layer) 
+	area.collision_mask = get_combat_mask(layer)
+
+## Common mask constants
+const PLAYER_MASK = 1 << 1  # Bit mask for player layer 

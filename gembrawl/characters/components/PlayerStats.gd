@@ -55,21 +55,29 @@ func handle_defeat() -> void:
 
 ## Start respawn timer
 func _start_respawn_timer() -> void:
-	respawning.emit(respawn_delay)
-	
-	# Hide player during respawn
-	player.visible = false
-	player.set_physics_process(false)
-	
-	# Countdown timer
-	for i in range(int(respawn_delay)):
-		await player.get_tree().create_timer(1.0).timeout
-		respawning.emit(respawn_delay - i - 1)
-	
-	# Find a spawn point and respawn
-	var spawn_point = _get_spawn_point()
-	if spawn_point:
-		respawn(spawn_point.global_position)
+	# Use SpawnManager if available
+	var spawn_manager = get_node_or_null("/root/SpawnManager")
+	if spawn_manager:
+		print("Using SpawnManager for respawn")
+		spawn_manager.request_respawn(player, respawn_delay)
+	else:
+		print("SpawnManager not found, using fallback")
+		# Fallback to old respawn system
+		respawning.emit(respawn_delay)
+		
+		# Hide player during respawn
+		player.visible = false
+		player.set_physics_process(false)
+		
+		# Countdown timer
+		for i in range(int(respawn_delay)):
+			await player.get_tree().create_timer(1.0).timeout
+			respawning.emit(respawn_delay - i - 1)
+		
+		# Find a spawn point and respawn
+		var spawn_point = _get_spawn_point()
+		if spawn_point:
+			respawn(spawn_point.global_position)
 
 ## Get a suitable spawn point
 func _get_spawn_point() -> Node3D:
@@ -98,13 +106,19 @@ func _become_spectator() -> void:
 
 ## Respawn the player at a given position
 func respawn(spawn_position: Vector3) -> void:
+	print("PlayerStats: respawn called, setting position to ", spawn_position)
 	player.global_position = spawn_position
 	player.velocity = Vector3.ZERO  # Reset velocity on respawn
 	is_alive = true
 	player.visible = true
+	
+	# Restore collision layers
+	CombatLayers.setup_combat_body(player, CombatLayers.Layer.PLAYER)
+	
 	gem_data.current_health = gem_data.max_health
 	health_changed.emit(gem_data.current_health, gem_data.max_health)
 	player.set_physics_process(true)
+	print("PlayerStats: Player respawned, is_alive = ", is_alive)
 	
 	# Update hex position if movement component exists
 	var movement = player.get_node_or_null("Movement")

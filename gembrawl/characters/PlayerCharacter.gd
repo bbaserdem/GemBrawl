@@ -262,8 +262,11 @@ func use_skill() -> void:
 
 ## Respawn the player at a given position
 func respawn(spawn_position: Vector3) -> void:
+	print("PlayerCharacter: respawn called with position ", spawn_position)
 	if stats:
 		stats.respawn(spawn_position)
+	else:
+		print("PlayerCharacter: No stats component!")
 
 ## Set position to a specific hex
 func set_hex_position(hex_coord: Vector2i) -> void:

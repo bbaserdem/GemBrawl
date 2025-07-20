@@ -1,0 +1,12 @@
+PLACEHOLDER: Meadow Base Texture 1
+-----------------------------------
+Resolution: 512x512
+Description: Base grass texture for meadow tiles
+Visual characteristics:
+- Fresh green grass color (#4CAF50 as base)
+- Subtle color variations (#388E3C to #66BB6A)
+- Natural grass blade patterns
+- Seamless tiling
+- Suitable for stylized game aesthetic
+- No flowers or decorations (those come from overlays)
+- Medium grass height visualization

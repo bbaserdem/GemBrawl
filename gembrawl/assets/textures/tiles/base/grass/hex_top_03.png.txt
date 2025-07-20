@@ -1,0 +1,13 @@
+PLACEHOLDER: Meadow Base Texture 3 with Dark Spots
+-------------------------------------------------
+Resolution: 512x512
+Description: Grass texture with worn/dark areas
+Visual characteristics:
+- Base grass similar to hex_top_01
+- Dark patches showing worn earth (#5D4037)
+- Some yellowed/dead grass areas (#8D6E63)
+- Suggests foot traffic or aged grass
+- 20-30% dark spot coverage
+- Natural, organic patch shapes
+- Seamless tiling
+- Good for creating path-like wear patterns

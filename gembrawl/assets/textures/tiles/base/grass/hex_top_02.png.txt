@@ -1,0 +1,12 @@
+PLACEHOLDER: Meadow Base Texture 2 with Flowers
+-----------------------------------------------
+Resolution: 512x512
+Description: Grass texture with integrated flower patches
+Visual characteristics:
+- Base grass similar to hex_top_01
+- Small wildflower clusters scattered
+- Flower colors: white daisies, yellow buttercups, purple clover
+- Flowers should be subtle, not overwhelming
+- 15-20% coverage of flowers
+- Seamless tiling maintained
+- Flowers positioned to avoid obvious patterns when tiled

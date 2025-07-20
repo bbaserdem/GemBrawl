@@ -1,0 +1,14 @@
+PLACEHOLDER: Meadow Dark Patches Overlay
+---------------------------------------
+Resolution: 512x512
+Format: PNG with alpha transparency
+Description: Worn/dead grass area overlay
+Visual characteristics:
+- Transparent background
+- Dark brown earth showing through (#5D4037)
+- Dead yellow grass strands (#8D6E63)
+- Irregular, organic shapes
+- Soft alpha edges
+- Various patch sizes
+- 15-25% coverage
+- Suggests heavy foot traffic

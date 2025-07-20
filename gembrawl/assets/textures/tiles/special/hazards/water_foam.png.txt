@@ -1,0 +1,14 @@
+PLACEHOLDER: Water Foam Effects
+------------------------------
+Resolution: 512x512
+Format: PNG with alpha transparency
+Description: Foam and ripples at water edges
+Visual characteristics:
+- Transparent background
+- White foam texture (#FFFFFF)
+- Semi-transparent (50-80% alpha)
+- Concentrated at edges
+- Natural foam patterns
+- Small bubbles and froth
+- Wave ripple lines
+- Enhances water-rock transition

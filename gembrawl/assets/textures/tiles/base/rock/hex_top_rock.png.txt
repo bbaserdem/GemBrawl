@@ -1,0 +1,13 @@
+PLACEHOLDER: Rocky Elevated Tile Top
+-----------------------------------
+Resolution: 512x512
+Description: Rocky surface for elevated tiles
+Visual characteristics:
+- Grey stone base color (#757575)
+- Rough, angular rock texture
+- Natural cracks and fissures
+- Some lighter areas (#9E9E9E)
+- Darker crevices (#424242)
+- Non-uniform surface
+- Subtle height variation implied
+- Good for elevated platform feel

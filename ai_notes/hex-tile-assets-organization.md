@@ -21,7 +21,7 @@ This document outlines the comprehensive asset organization strategy for the hex
 
 ### Complete Asset Organization
 ```
-assets/
+gembrawl/assets/
 ├── meshes/
 │   └── tiles/
 │       ├── base/
@@ -208,7 +208,7 @@ BaseTileMaterial
 ```gdscript
 # Example biome switching code
 func set_arena_biome(biome_name: String):
-    var material = load("res://assets/materials/tiles/biomes/" + biome_name + "_tile.tres")
+    var material = load("res://gembrawl/assets/materials/tiles/biomes/" + biome_name + "_tile.tres")
     for tile in arena_tiles:
         tile.material_override = material
 ```

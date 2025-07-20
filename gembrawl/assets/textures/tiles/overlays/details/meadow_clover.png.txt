@@ -1,0 +1,14 @@
+PLACEHOLDER: Meadow Clover Overlay
+---------------------------------
+Resolution: 512x512
+Format: PNG with alpha transparency
+Description: Clover patch overlay
+Visual characteristics:
+- Transparent background
+- Three-leaf clover clusters
+- Deep green color (#2E7D32)
+- Occasional four-leaf clover (rare)
+- Natural clustering pattern
+- 5-10% coverage
+- Varies in density
+- Adds lush variety to base grass

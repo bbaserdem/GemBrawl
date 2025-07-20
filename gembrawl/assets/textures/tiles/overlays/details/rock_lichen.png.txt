@@ -1,0 +1,14 @@
+PLACEHOLDER: Rock Lichen Overlay
+-------------------------------
+Resolution: 512x512
+Format: PNG with alpha transparency
+Description: Lichen growth on rocks
+Visual characteristics:
+- Transparent background
+- Pale green/yellow lichen (#C0CA33)
+- Orange lichen patches (#FF6F00)
+- Circular growth patterns
+- Varied sizes (5-50 pixels)
+- Natural distribution
+- Subtle texture
+- Adds age and character

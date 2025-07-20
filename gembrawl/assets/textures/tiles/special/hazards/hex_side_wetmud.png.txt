@@ -1,0 +1,13 @@
+PLACEHOLDER: Wet Mud Side Texture
+--------------------------------
+Resolution: 256x512
+Description: Muddy sides for water hazard tiles
+Visual characteristics:
+- Dark wet mud color (#3E2723)
+- Glossy/wet appearance
+- Water stain marks
+- Dripping texture elements
+- Darker at water line (#1A237E)
+- Gradual transition upward
+- Some algae/moss (#1B5E20)
+- Suggests waterlogged earth

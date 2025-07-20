@@ -1,0 +1,14 @@
+PLACEHOLDER: Water Rock Border Mask
+----------------------------------
+Resolution: 512x512
+Format: PNG with alpha channel
+Description: Mask for rocky water edges
+Visual characteristics:
+- Black = full water (center)
+- White = full rock (edges)
+- Grey gradient = blend zone
+- Irregular, natural edge shapes
+- Approximately 70% water, 30% rock
+- Organic shoreline pattern
+- No straight edges
+- Used for shader blending

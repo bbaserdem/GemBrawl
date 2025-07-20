@@ -1,0 +1,13 @@
+PLACEHOLDER: Water Rock Border Texture
+-------------------------------------
+Resolution: 512x512
+Description: Rocky texture for water edges
+Visual characteristics:
+- Wet rock appearance
+- Darker than normal rock (#424242)
+- Water erosion patterns
+- Smooth, worn surfaces
+- Some algae growth (#2E7D32)
+- Barnacle-like details
+- Matches water hazard theme
+- Blends with water center

@@ -1,0 +1,14 @@
+PLACEHOLDER: Meadow Puddle Overlay
+---------------------------------
+Resolution: 512x512
+Format: PNG with alpha transparency
+Description: Small water puddle overlay
+Visual characteristics:
+- Transparent background
+- Dark wet earth color (#3E2723)
+- Reflective water surface in center
+- Soft alpha edges for blending
+- Irregular, natural puddle shapes
+- 1-3 puddles per texture
+- Muddy edge transition
+- Can be combined with dark patches

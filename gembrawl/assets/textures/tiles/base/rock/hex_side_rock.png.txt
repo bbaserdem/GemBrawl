@@ -1,0 +1,14 @@
+PLACEHOLDER: Rocky Cliff Side Texture
+------------------------------------
+Resolution: 256x512
+Description: Cliff-like rocky sides for elevated tiles
+Visual characteristics:
+- Vertical rock stratification
+- Grey stone (#616161 base)
+- Visible rock layers
+- Sharp, angular edges
+- Some erosion details
+- Darker shadows in crevices (#424242)
+- Lighter exposed edges (#BDBDBD)
+- Suggests height and elevation
+- More dramatic than grass sides

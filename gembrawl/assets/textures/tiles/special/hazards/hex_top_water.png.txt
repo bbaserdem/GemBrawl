@@ -1,0 +1,13 @@
+PLACEHOLDER: Water Hazard Surface
+--------------------------------
+Resolution: 512x512
+Description: Water surface texture for hazard tiles
+Visual characteristics:
+- Deep blue water (#1565C0)
+- Subtle wave patterns
+- Semi-transparent areas showing depth
+- Darker deep areas (#0D47A1)
+- Light reflections (#42A5F5)
+- Animated potential (frame 1)
+- Seamless tiling
+- Stylized water appearance

@@ -1,0 +1,14 @@
+PLACEHOLDER: Meadow Flowers Overlay 2
+------------------------------------
+Resolution: 512x512
+Format: PNG with alpha transparency
+Description: Different flower variety overlay
+Visual characteristics:
+- Transparent background
+- Purple clover patches
+- Small blue forget-me-nots
+- Pink wildflower clusters
+- More clustered than overlay 1
+- Natural grouping patterns
+- 8-12% coverage
+- Complements overlay 1 for mixing

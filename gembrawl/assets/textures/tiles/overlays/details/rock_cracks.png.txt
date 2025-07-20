@@ -1,0 +1,14 @@
+PLACEHOLDER: Rock Cracks Overlay
+-------------------------------
+Resolution: 512x512
+Format: PNG with alpha transparency
+Description: Additional crack details for rocks
+Visual characteristics:
+- Transparent background
+- Dark crack lines (#212121)
+- Various crack patterns
+- Thin to medium width
+- Natural fracture patterns
+- Can enhance base rock texture
+- Alpha fades at crack edges
+- Adds weathering detail

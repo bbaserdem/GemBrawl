@@ -1,0 +1,14 @@
+PLACEHOLDER: Meadow Flowers Overlay 1
+------------------------------------
+Resolution: 512x512
+Format: PNG with alpha transparency
+Description: Scattered wildflower overlay
+Visual characteristics:
+- Transparent background
+- Small white daisies (5-8 pixels diameter)
+- Yellow buttercups scattered
+- Subtle drop shadows for depth
+- Random, natural distribution
+- No obvious tiling patterns
+- 10-15% coverage when applied
+- Can be rotated/scaled for variety

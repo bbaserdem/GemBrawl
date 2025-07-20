@@ -1,0 +1,12 @@
+PLACEHOLDER: Meadow Tile Side Texture
+------------------------------------
+Resolution: 256x512
+Description: Earth/soil texture for tile sides
+Visual characteristics:
+- Brown earth color (#6D4C41 base)
+- Layered soil appearance
+- Some grass roots visible at top edge
+- Subtle rock/pebble details
+- Darker at bottom (#4E342E)
+- Seamless horizontal tiling
+- Shows natural earth stratification

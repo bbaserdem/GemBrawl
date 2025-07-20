@@ -1,0 +1,13 @@
+PLACEHOLDER: Mossy Rock Variation
+--------------------------------
+Resolution: 512x512
+Description: Rocky surface with moss growth
+Visual characteristics:
+- Base rock texture like hex_top_rock
+- Green moss patches (#4CAF50)
+- Moss in crevices and low areas
+- 20-30% moss coverage
+- Natural growth patterns
+- Slightly weathered appearance
+- Adds visual variety
+- Good for older/weathered platforms

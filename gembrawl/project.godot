@@ -19,6 +19,8 @@ config/icon="res://icon.png"
 
 SpawnManager="*res://game/SpawnManager.gd"
 CombatManager="*res://game/CombatManager.gd"
+InputMapping="*res://globals/InputMapping.gd"
+ControllerManager="*res://globals/ControllerManager.gd"
 
 [input]
 

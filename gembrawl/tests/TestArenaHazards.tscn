@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=6 format=3 uid="uid://cjlbn1a7ajuc1"]
 
 [ext_resource type="Script" path="res://tests/TestArenaHazards.gd" id="1_qx8ck"]
 [ext_resource type="PackedScene" path="res://characters/PlayerCharacter.tscn" id="2_player"]
@@ -30,7 +30,6 @@ fov = 60.0
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.707107, -0.612372, 0.353553, 0, 0.5, 0.866025, -0.707107, -0.612372, 0.353553, 0, 10, 0)
-light_energy = 1.0
 shadow_enabled = true
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
@@ -41,6 +40,8 @@ layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Instructions" type="Label" parent="UI"]
 layout_mode = 0

@@ -1,21 +1,21 @@
 {
   "models": {
     "main": {
-      "provider": "openai",
-      "modelId": "gpt-4-5-preview",
-      "maxTokens": 16384,
+      "provider": "gemini-cli",
+      "modelId": "gemini-2.5-pro",
+      "maxTokens": 65536,
       "temperature": 0.2
     },
     "research": {
-      "provider": "openai",
-      "modelId": "gpt-4o-mini",
-      "maxTokens": 16384,
+      "provider": "perplexity",
+      "modelId": "deep-research",
+      "maxTokens": 8700,
       "temperature": 0.1
     },
     "fallback": {
-      "provider": "openai",
-      "modelId": "gpt-4o",
-      "maxTokens": 16384,
+      "provider": "claude-code",
+      "modelId": "opus",
+      "maxTokens": 32000,
       "temperature": 0.1
     }
   },

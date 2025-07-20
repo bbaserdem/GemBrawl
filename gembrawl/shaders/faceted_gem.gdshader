@@ -16,11 +16,11 @@ uniform float facet_sharpness : hint_range(0.0, 10.0) = 5.0;
 uniform float rim_light_power : hint_range(0.0, 5.0) = 2.0;
 uniform float rim_light_intensity : hint_range(0.0, 2.0) = 1.0;
 
-// Calculate flat normal from position
-vec3 get_flat_normal() {
-    vec3 pos_dx = dFdx(VERTEX);
-    vec3 pos_dy = dFdy(VERTEX);
-    return normalize(cross(pos_dy, pos_dx));
+// Store world position
+varying vec3 world_pos;
+
+void vertex() {
+    world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 }
 
 // Stepped/quantized lighting for faceted look
@@ -28,8 +28,11 @@ float toon_shading(float value, float levels) {
     return round(value * levels) / levels;
 }
 
-void vertex() {
-    // Keep vertex position as-is
+// Calculate flat normal from world position
+vec3 get_flat_normal() {
+    vec3 pos_dx = dFdx(world_pos);
+    vec3 pos_dy = dFdy(world_pos);
+    return normalize(cross(pos_dy, pos_dx));
 }
 
 void fragment() {

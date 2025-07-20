@@ -145,39 +145,60 @@ func _apply_gem_properties() -> void:
 func _apply_gem_material_enhancements(node: Node, gem_data: Gem) -> void:
 	if node is MeshInstance3D:
 		var mesh_instance = node as MeshInstance3D
-		var material = StandardMaterial3D.new()
 		
-		# Base color from gem data
-		material.albedo_color = gem_data.color
-		
-		# Make gems reflective but not glowing
-		material.metallic = 0.0  # Gems are not metallic
-		material.roughness = 0.05  # Very slightly rough to catch light better
-		material.specular = 0.8  # High specular reflection
-		
-		# Disable emission for no glow
-		material.emission_enabled = false
-		
-		# Subtle rim lighting to highlight edges
-		material.rim_enabled = true
-		material.rim = 0.2  # Very subtle
-		material.rim_tint = 0.0  # No color tint
-		
-		# Enable clearcoat for polished look
-		material.clearcoat_enabled = true
-		material.clearcoat = 0.5
-		material.clearcoat_roughness = 0.03
-		
-		# Special colors for specific gem types
-		match gem_data.element:
-			"ruby":
-				material.albedo_color = Color(0.9, 0.15, 0.2)  # Bright red
-			"sapphire":
-				material.albedo_color = Color(0.1, 0.3, 1.0)  # Bright blue
-			"emerald":
-				material.albedo_color = Color(0.1, 0.9, 0.3)  # Bright green
-		
-		mesh_instance.material_override = material
+		# Use the outlined gem shader for a nice toon-shaded look
+		var shader = load("res://shaders/outlined_gem.gdshader")
+		if shader:
+			var shader_material = ShaderMaterial.new()
+			shader_material.shader = shader
+			
+			# Set up gem colors based on type
+			var gem_color: Color
+			var highlight_color: Color
+			var shadow_color: Color
+			var outline_color: Color
+			
+			match gem_data.element:
+				"ruby":
+					gem_color = Color(0.9, 0.15, 0.2, 1.0)
+					highlight_color = Color(1.0, 0.5, 0.6, 1.0)
+					shadow_color = Color(0.4, 0.05, 0.1, 1.0)
+					outline_color = Color(0.2, 0.0, 0.0, 1.0)
+				"sapphire":
+					gem_color = Color(0.1, 0.3, 1.0, 1.0)
+					highlight_color = Color(0.5, 0.6, 1.0, 1.0)
+					shadow_color = Color(0.05, 0.15, 0.4, 1.0)
+					outline_color = Color(0.0, 0.1, 0.2, 1.0)
+				"emerald":
+					gem_color = Color(0.1, 0.8, 0.3, 1.0)
+					highlight_color = Color(0.5, 1.0, 0.6, 1.0)
+					shadow_color = Color(0.05, 0.4, 0.15, 1.0)
+					outline_color = Color(0.0, 0.2, 0.05, 1.0)
+				_:
+					# Default colors
+					gem_color = gem_data.color
+					highlight_color = gem_data.color.lightened(0.3)
+					shadow_color = gem_data.color.darkened(0.3)
+					outline_color = gem_data.color.darkened(0.5)
+			
+			# Set shader parameters
+			shader_material.set_shader_parameter("gem_color", gem_color)
+			shader_material.set_shader_parameter("highlight_color", highlight_color)
+			shader_material.set_shader_parameter("shadow_color", shadow_color)
+			shader_material.set_shader_parameter("outline_color", outline_color)
+			shader_material.set_shader_parameter("light_threshold", 0.5)
+			shader_material.set_shader_parameter("shadow_threshold", 0.3)
+			shader_material.set_shader_parameter("outline_width", 0.02)
+			
+			mesh_instance.material_override = shader_material
+		else:
+			# Fallback to standard material if shader not found
+			var material = StandardMaterial3D.new()
+			material.albedo_color = gem_data.color
+			material.metallic = 0.0
+			material.roughness = 0.05
+			material.specular = 0.8
+			mesh_instance.material_override = material
 	
 	# Apply to all children
 	for child in node.get_children():

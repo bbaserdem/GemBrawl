@@ -1,7 +1,10 @@
 ## Test controller for spawn manager functionality
 extends Node
 
-@onready var player: Player3D = $Player
+# Import dependencies
+const DamageSystem = preload("res://scripts/DamageSystem.gd")
+
+@onready var player = $Player  ## IPlayer
 @onready var ui_panel: Panel = $UI/DebugPanel
 @onready var health_label: Label = $UI/DebugPanel/VBoxContainer/HealthLabel
 @onready var lives_label: Label = $UI/DebugPanel/VBoxContainer/LivesLabel
@@ -177,7 +180,7 @@ func _on_respawning(time_left: float) -> void:
 		status_label.modulate = Color.WHITE
 		_update_ui()
 
-func _on_damage_received(damage_info: DamageSystem.DamageInfo) -> void:
+func _on_damage_received(damage_info: Dictionary) -> void:  ## damage_info is DamageSystem.DamageInfo
 	# Show damage in status
 	var damage_text = "%d %s damage" % [damage_info.final_damage, damage_types[damage_info.damage_type]]
 	if damage_info.is_critical:

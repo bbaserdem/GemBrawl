@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://c1hpgbt62rvqi"]
 
-[ext_resource type="Script" path="res://tests/gems/TestRubyGemLoader.gd" id="1"]
+[ext_resource type="Script" path="res://tests/gems/TestAssetsRubyLoader.gd" id="1"]
 
 [sub_resource type="Environment" id="1"]
 background_mode = 2

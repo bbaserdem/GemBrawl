@@ -19,20 +19,26 @@ All test scenes are located in the `tests/` directory:
 
 ```
 tests/
-├── HexArenaGameplay.tscn      # Full hex arena gameplay test
-├── TestCombat.tscn            # Basic combat mechanics test
-├── TestCombatCollision.tscn   # Combat collision system test
-├── TestHex.tscn               # Hex grid functionality test
+├── TestMainCamera.tscn        # Camera angle and control test
+├── TestCombatDamage.tscn      # Damage taking and health system test
+├── TestCombatAttack.tscn      # Attack hitbox and collision test
+├── TestArenaHex.tscn          # Hex grid functionality test
+├── TestCombatSpawn.tscn       # Spawn system test
+├── TestAssetsGemMesh.tscn     # Gem mesh analysis test
+├── TestArenaHazards.tscn      # Arena hazards test
 └── combat/
-    ├── TestAOE.tscn           # Area of effect attacks
-    ├── TestMeleeHitbox.tscn   # Melee combat hitboxes
-    └── TestProjectile.tscn    # Projectile mechanics
+    ├── TestCombatAOE.tscn     # Area of effect attacks
+    ├── TestCombatMelee.tscn   # Melee combat hitboxes
+    └── TestCombatRanged.tscn  # Projectile mechanics
+└── gems/
+    ├── TestAssetsEmerald.tscn # Emerald gem test
+    └── TestAssetsRuby.tscn    # Ruby gem test
 ```
 
 ## Test Scene Descriptions
 
-### 1. HexArenaGameplay.tscn
-**Purpose**: Tests full gameplay on a hexagonal arena
+### 1. TestMainCamera.tscn
+**Purpose**: Tests camera angles and controls
 **What it tests**:
 - Hex-based movement system
 - Arena boundaries and fall zones
@@ -46,8 +52,8 @@ tests/
 3. Use WASD/Arrow keys to move
 4. Test falling off edges and respawning
 
-### 2. TestCombat.tscn
-**Purpose**: Tests core combat mechanics
+### 2. TestCombatDamage.tscn
+**Purpose**: Tests damage taking and health system
 **What it tests**:
 - Damage system (physical, magical, true, elemental damage types)
 - Health and lives system
@@ -66,8 +72,8 @@ tests/
 3. Test different damage types and observe the console output
 4. Test death and respawn mechanics
 
-### 3. TestCombatCollision.tscn
-**Purpose**: Comprehensive combat collision testing
+### 3. TestCombatAttack.tscn
+**Purpose**: Tests attack hitboxes and collision detection
 **What it tests**:
 - Melee attack hitboxes
 - Projectile physics and collision
@@ -95,7 +101,7 @@ tests/
 4. Test combat between players
 5. Observe hit detection and damage numbers
 
-### 4. TestHex.tscn
+### 4. TestArenaHex.tscn
 **Purpose**: Tests hexagonal grid system
 **What it tests**:
 - Hex coordinate system
@@ -112,9 +118,9 @@ tests/
 
 These are component scenes used by TestCombatCollision.tscn:
 
-- **TestAOE.tscn**: Area attack visual and collision component
-- **TestMeleeHitbox.tscn**: Melee attack hitbox component
-- **TestProjectile.tscn**: Projectile physics component
+- **TestCombatAOE.tscn**: Area attack visual and collision component
+- **TestCombatMelee.tscn**: Melee attack hitbox component
+- **TestCombatRanged.tscn**: Projectile physics component
 
 These scenes are not meant to be run directly but are instantiated by the test controllers.
 
@@ -141,19 +147,19 @@ These scenes are not meant to be run directly but are instantiated by the test c
 ## Common Testing Workflows
 
 ### Testing Combat Mechanics
-1. Start with `TestCombat.tscn` to verify basic damage/health systems
-2. Move to `TestCombatCollision.tscn` for full combat testing
+1. Start with `TestCombatDamage.tscn` to verify basic damage/health systems
+2. Move to `TestCombatAttack.tscn` for full combat testing
 3. Test different attack types and observe damage calculations
 4. Verify hitbox accuracy and collision detection
 
 ### Testing Movement and Arena
-1. Use `HexArenaGameplay.tscn` for hex-based movement
+1. Use `TestArenaHex.tscn` for hex-based movement
 2. Test arena boundaries and fall detection
 3. Verify spawn points work correctly
 4. Test camera following and controls
 
 ### Testing Multiplayer Interactions
-1. Use `TestCombatCollision.tscn` with Tab to switch players
+1. Use `TestCombatAttack.tscn` with Tab to switch players
 2. Test combat between multiple players
 3. Verify damage is applied correctly to targets
 4. Check that UI updates for both players

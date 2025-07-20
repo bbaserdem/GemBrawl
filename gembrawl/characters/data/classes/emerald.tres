@@ -6,7 +6,7 @@
 script = ExtResource("1_gem_script")
 gem_name = "Emerald"
 color = Color(0.1, 0.8, 0.2, 1)
-model_path = ""
+model_path = "res://assets/models/items/gem_emerald.glb"
 element = "emerald"
 max_health = 110
 current_health = 110

@@ -267,7 +267,7 @@
               1
             ],
             "details": "Design and place spike traps and lava tiles within the hexagonal arena. Ensure these hazards are functional and visually distinct.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -278,7 +278,7 @@
               1
             ],
             "details": "Identify strategic locations for player spawn points that ensure fair starting positions. Implement these points in the arena layout.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -480,7 +480,7 @@
     ],
     "metadata": {
       "created": "2025-07-15T18:49:15.591Z",
-      "updated": "2025-07-19T17:01:13.531Z",
+      "updated": "2025-07-19T20:49:15.947Z",
       "description": "Tasks for master context"
     }
   }

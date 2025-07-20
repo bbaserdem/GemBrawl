@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "image-generator": "github:sammyl720/image-generator-mcp-server",
     "task-master-ai": "^0.20.0"
   }
 }

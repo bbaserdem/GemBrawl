@@ -14,8 +14,8 @@ var recent_hits: Array[Dictionary] = []  # Track recent hits for combos
 
 ## Signals
 signal combat_hit(attacker: Node3D, target: Node3D, damage_info: DamageSystem.DamageInfo)
-signal player_killed(victim: Player3D, killer: Node3D)
-signal combo_achieved(player: Player3D, combo_count: int)
+signal player_killed(victim: IPlayer, killer: Node3D)
+signal combo_achieved(player: IPlayer, combo_count: int)
 
 func _ready() -> void:
 	pass
@@ -57,7 +57,7 @@ func register_hit(attacker: Node3D, target: Node3D, damage_info: DamageSystem.Da
 ## Cleans up victim's active projectiles/AoEs and emits death signal
 ## @param victim: The player who died
 ## @param killer: The node that caused the death (optional)
-func register_player_death(victim: Player3D, killer: Node3D = null) -> void:
+func register_player_death(victim: IPlayer, killer: Node3D = null) -> void:
 	player_killed.emit(victim, killer)
 	
 	# Clear victim's projectiles

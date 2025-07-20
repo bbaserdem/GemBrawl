@@ -93,37 +93,47 @@ func _ready() -> void:
 func _ensure_components() -> void:
 	print("=== Ensuring Components ===")
 	
+	var player_interface: IPlayer = self
+	
 	if not movement:
 		print("Creating new movement component")
 		movement = PlayerMovement.new()
 		movement.name = "Movement"
 		add_child(movement)
+		movement.player = player_interface
 	else:
 		print("Movement component already exists from scene")
+		movement.player = player_interface
 	
 	if not combat:
 		print("Creating new combat component")
 		combat = PlayerCombat.new()
 		combat.name = "Combat"
 		add_child(combat)
+		combat.player = player_interface
 	else:
 		print("Combat component already exists from scene")
+		combat.player = player_interface
 	
 	if not stats:
 		print("Creating new stats component")
 		stats = PlayerStats.new()
 		stats.name = "Stats"
 		add_child(stats)
+		stats.player = player_interface
 	else:
 		print("Stats component already exists from scene")
+		stats.player = player_interface
 	
 	if not input:
 		print("Creating new input component")
 		input = PlayerInput.new()
 		input.name = "Input"
 		add_child(input)
+		input.player = player_interface
 	else:
 		print("Input component already exists from scene")
+		input.player = player_interface
 
 ## Public setup method for external initialization
 func setup(arena_ref) -> void:
@@ -385,3 +395,37 @@ func _on_became_spectator() -> void:
 
 func _on_respawning(time_until_respawn: float) -> void:
 	respawning.emit(time_until_respawn)
+
+## IPlayer interface implementation
+func get_arena() -> Node:
+	return arena
+
+func is_alive() -> bool:
+	return stats.is_alive if stats else true
+
+func is_spectator() -> bool:
+	return stats.is_spectator if stats else false
+
+func get_player_id() -> int:
+	return player_id
+
+func get_stats() -> Node:
+	return stats
+
+func get_combat() -> Node:
+	return combat
+
+func get_movement() -> Node:
+	return movement
+
+func get_input() -> Node:
+	return input
+
+func set_visible(visible: bool) -> void:
+	self.visible = visible
+
+func set_collision_layer(layer: int) -> void:
+	collision_layer = layer
+
+func set_collision_mask(mask: int) -> void:
+	collision_mask = mask

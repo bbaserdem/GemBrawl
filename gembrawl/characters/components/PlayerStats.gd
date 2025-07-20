@@ -12,8 +12,8 @@ var is_alive: bool = true
 var current_lives: int = 3
 var is_spectator: bool = false
 
-## References - untyped to avoid circular dependencies
-var player  # Player3D reference
+## References
+var player: IPlayer
 var gem_data  # Gem resource
 
 ## Health getters
@@ -29,12 +29,9 @@ signal defeated()
 signal became_spectator()
 signal respawning(time_until_respawn: float)
 
+# Player is now injected from parent instead of getting from get_parent()
+
 func _ready() -> void:
-	player = get_parent()
-	if not player:
-		push_error("PlayerStats must be a child of Player3D")
-		queue_free()
-	
 	current_lives = max_lives
 
 ## Initialize stats component
@@ -72,12 +69,12 @@ func _start_respawn_timer() -> void:
 		respawning.emit(respawn_delay)
 		
 		# Hide player during respawn
-		player.visible = false
+		player.set_visible(false)
 		player.set_physics_process(false)
 		
 		# Countdown timer
 		for i in range(int(respawn_delay)):
-			await player.get_tree().create_timer(1.0).timeout
+			await get_tree().create_timer(1.0).timeout
 			respawning.emit(respawn_delay - i - 1)
 		
 		# Find a spawn point and respawn
@@ -88,10 +85,10 @@ func _start_respawn_timer() -> void:
 ## Get a suitable spawn point
 func _get_spawn_point() -> Node3D:
 	# Look for spawn points in the scene
-	var spawn_points = player.get_tree().get_nodes_in_group("spawn_points")
+	var spawn_points = get_tree().get_nodes_in_group("spawn_points")
 	if spawn_points.is_empty():
 		# Try to get from arena
-		var arena = player.get_node_or_null("/root/Main/HexArena")
+		var arena = player.get_arena()
 		if arena and arena.has_method("get_random_spawn_position"):
 			var marker = Marker3D.new()
 			marker.global_position = arena.get_random_spawn_position()
@@ -106,20 +103,23 @@ func _get_spawn_point() -> Node3D:
 func _become_spectator() -> void:
 	is_spectator = true
 	became_spectator.emit()
-	player.visible = false  # Hide the player model
-	player.collision_layer = 0  # Disable all collisions
-	player.collision_mask = 0
+	player.set_visible(false)  # Hide the player model
+	player.set_collision_layer(0)  # Disable all collisions
+	player.set_collision_mask(0)
 
 ## Respawn the player at a given position
 func respawn(spawn_position: Vector3) -> void:
 	print("PlayerStats: respawn called, setting position to ", spawn_position)
-	player.global_position = spawn_position
-	player.velocity = Vector3.ZERO  # Reset velocity on respawn
+	player.set_global_position(spawn_position)
+	player.set_velocity(Vector3.ZERO)  # Reset velocity on respawn
 	is_alive = true
-	player.visible = true
+	player.set_visible(true)
 	
 	# Restore collision layers
-	CombatLayers.setup_combat_body(player, CombatLayers.Layer.PLAYER)
+	const CombatLayers = preload("res://scripts/CombatLayers.gd")
+	# We need to cast player back to Node3D for CombatLayers
+	if player is Node3D:
+		CombatLayers.setup_combat_body(player as Node3D, CombatLayers.Layer.PLAYER)
 	
 	gem_data.current_health = gem_data.max_health
 	health_changed.emit(gem_data.current_health, gem_data.max_health)
@@ -127,12 +127,12 @@ func respawn(spawn_position: Vector3) -> void:
 	print("PlayerStats: Player respawned, is_alive = ", is_alive)
 	
 	# Update hex position if movement component exists
-	var movement = player.get_node_or_null("Movement")
+	var movement = player.get_movement()
 	if movement and movement.has_method("update_current_hex"):
 		movement.update_current_hex()
 	
 	# Grant spawn invulnerability through combat component
-	var combat = player.get_node_or_null("Combat")
+	var combat = player.get_combat()
 	if combat and combat.has_method("start_invulnerability"):
 		combat.start_invulnerability(2.0)  # Longer duration for respawn
 

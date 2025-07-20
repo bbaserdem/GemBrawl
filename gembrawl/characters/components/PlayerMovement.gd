@@ -29,18 +29,14 @@ var target_hex: Vector2i = Vector2i.ZERO
 var hex_move_progress: float = 0.0
 var is_moving_to_hex: bool = false
 
-## References - untyped to avoid circular dependencies
-var player: CharacterBody3D
+## References
+var player: IPlayer
 var arena  # HexArena reference
 
 ## Signals
 signal hex_entered(hex_coord: Vector2i)
 
-func _ready() -> void:
-	player = get_parent() as CharacterBody3D
-	if not player:
-		push_error("PlayerMovement must be a child of CharacterBody3D")
-		queue_free()
+# Player is now injected from parent instead of getting from get_parent()
 
 ## Initialize movement component
 func setup(arena_ref) -> void:
@@ -58,12 +54,16 @@ func process_movement(delta: float, input_vector: Vector2) -> void:
 func _handle_free_movement(delta: float, input_vector: Vector2) -> void:
 	# Apply gravity
 	if not player.is_on_floor():
-		player.velocity.y -= gravity * delta
-		player.velocity.y = max(player.velocity.y, -max_fall_speed)
+		var velocity = player.get_velocity()
+		velocity.y -= gravity * delta
+		velocity.y = max(velocity.y, -max_fall_speed)
+		player.set_velocity(velocity)
 	
 	# Handle jumping
 	if player.is_on_floor() and Input.is_action_just_pressed("jump"):
-		player.velocity.y = jump_force
+		var velocity = player.get_velocity()
+		velocity.y = jump_force
+		player.set_velocity(velocity)
 	
 	if input_vector.length() > 0:
 		# Get camera rotation for camera-relative movement
@@ -83,27 +83,33 @@ func _handle_free_movement(delta: float, input_vector: Vector2) -> void:
 		var movement_direction = cam_forward * -input_vector.y + cam_right * input_vector.x
 		
 		# Apply horizontal movement
-		var horizontal_velocity = Vector3(player.velocity.x, 0, player.velocity.z)
+		var velocity = player.get_velocity()
+		var horizontal_velocity = Vector3(velocity.x, 0, velocity.z)
 		horizontal_velocity = horizontal_velocity.move_toward(movement_direction * movement_speed, acceleration * delta)
-		player.velocity.x = horizontal_velocity.x
-		player.velocity.z = horizontal_velocity.z
+		velocity.x = horizontal_velocity.x
+		velocity.z = horizontal_velocity.z
+		player.set_velocity(velocity)
 		
 		# Rotate to face movement direction
 		if horizontal_velocity.length() > 0.1:
 			var look_direction = horizontal_velocity.normalized()
 			var target_rotation = atan2(look_direction.x, look_direction.z)
-			player.rotation.y = lerp_angle(player.rotation.y, target_rotation, rotation_speed * delta)
+			var rotation = player.get_rotation()
+			rotation.y = lerp_angle(rotation.y, target_rotation, rotation_speed * delta)
+			player.set_rotation(rotation)
 	else:
 		# Apply friction to horizontal movement only
-		var horizontal_velocity = Vector3(player.velocity.x, 0, player.velocity.z)
+		var velocity = player.get_velocity()
+		var horizontal_velocity = Vector3(velocity.x, 0, velocity.z)
 		horizontal_velocity = horizontal_velocity.move_toward(Vector3.ZERO, friction * delta)
-		player.velocity.x = horizontal_velocity.x
-		player.velocity.z = horizontal_velocity.z
+		velocity.x = horizontal_velocity.x
+		velocity.z = horizontal_velocity.z
+		player.set_velocity(velocity)
 	
 	player.move_and_slide()
 	
 	# Update current hex position
-	var new_hex = HexGrid.world_to_hex_3d(player.global_position)
+	var new_hex = HexGrid.world_to_hex_3d(player.get_global_position())
 	if new_hex != current_hex:
 		current_hex = new_hex
 		hex_entered.emit(current_hex)
@@ -112,12 +118,16 @@ func _handle_free_movement(delta: float, input_vector: Vector2) -> void:
 func _handle_hex_movement(delta: float, input_vector: Vector2) -> void:
 	# Apply gravity regardless of hex movement
 	if not player.is_on_floor():
-		player.velocity.y -= gravity * delta
-		player.velocity.y = max(player.velocity.y, -max_fall_speed)
+		var velocity = player.get_velocity()
+		velocity.y -= gravity * delta
+		velocity.y = max(velocity.y, -max_fall_speed)
+		player.set_velocity(velocity)
 	
 	# Handle jumping
 	if player.is_on_floor() and Input.is_action_just_pressed("jump"):
-		player.velocity.y = jump_force
+		var velocity = player.get_velocity()
+		velocity.y = jump_force
+		player.set_velocity(velocity)
 		
 	if not is_moving_to_hex:
 		# Get input and determine target hex
@@ -153,15 +163,19 @@ func _handle_hex_movement(delta: float, input_vector: Vector2) -> void:
 		var start_pos = HexGrid.hex_to_world_3d(current_hex)
 		var end_pos = HexGrid.hex_to_world_3d(target_hex)
 		var interpolated_pos = start_pos.lerp(end_pos, hex_move_progress)
-		player.global_position.x = interpolated_pos.x
-		player.global_position.z = interpolated_pos.z
+		var current_pos = player.get_global_position()
+		current_pos.x = interpolated_pos.x
+		current_pos.z = interpolated_pos.z
 		# Let gravity handle Y position
+		player.set_global_position(current_pos)
 		
 		# Face movement direction
 		if hex_move_progress < 0.5:
 			var look_dir = (end_pos - start_pos).normalized()
 			var target_rotation = atan2(look_dir.x, look_dir.z)
-			player.rotation.y = lerp_angle(player.rotation.y, target_rotation, rotation_speed * delta)
+			var rotation = player.get_rotation()
+			rotation.y = lerp_angle(rotation.y, target_rotation, rotation_speed * delta)
+			player.set_rotation(rotation)
 	
 	# Always apply physics to handle collisions and gravity
 	player.move_and_slide()
@@ -181,15 +195,17 @@ func _get_hex_direction_from_input(input: Vector2) -> int:
 
 ## Update current hex position
 func update_current_hex() -> void:
-	current_hex = HexGrid.world_to_hex_3d(player.global_position)
+	current_hex = HexGrid.world_to_hex_3d(player.get_global_position())
 
 ## Set position to a specific hex
 func set_hex_position(hex_coord: Vector2i) -> void:
 	current_hex = hex_coord
 	target_hex = hex_coord
 	var hex_pos = HexGrid.hex_to_world_3d(hex_coord)
-	player.global_position = hex_pos
-	player.global_position.y = max(hex_pos.y + ground_height, player.global_position.y)
+	var current_pos = player.get_global_position()
+	current_pos = hex_pos
+	current_pos.y = max(hex_pos.y + ground_height, current_pos.y)
+	player.set_global_position(current_pos)
 
 ## Handle spectator movement (free-fly camera)
 func handle_spectator_movement(delta: float, input_vector: Vector2) -> void:
@@ -215,4 +231,6 @@ func handle_spectator_movement(delta: float, input_vector: Vector2) -> void:
 			movement -= cam_up
 		
 		# Apply movement
-		player.global_position += movement.normalized() * movement_speed * 2.0 * delta
+		var current_pos = player.get_global_position()
+		current_pos += movement.normalized() * movement_speed * 2.0 * delta
+		player.set_global_position(current_pos)

@@ -29,7 +29,7 @@ enum Shape {
 @export var ring_inner_radius: float = 1.0  # For ring shape
 
 ## Internal state
-var owner_player: Player3D
+var owner_player: IPlayer
 var targets_hit: Array[Node3D] = []
 var is_active: bool = false
 var damage_timer: float = 0.0

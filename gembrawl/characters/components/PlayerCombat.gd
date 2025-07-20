@@ -14,8 +14,8 @@ var invulnerable: bool = false
 var skill_ready: bool = true
 var skill_cooldown_timer: float = 0.0
 
-## References - untyped to avoid circular dependencies
-var player  # Player3D reference
+## References
+var player: IPlayer
 var gem_data  # Gem resource
 
 ## Signals - untyped parameters to avoid dependency issues
@@ -23,11 +23,7 @@ signal damage_dealt(damage_info)
 signal damage_received(damage_info)
 signal skill_used()
 
-func _ready() -> void:
-	player = get_parent()
-	if not player:
-		push_error("PlayerCombat must be a child of Player3D")
-		queue_free()
+# Player is now injected from parent instead of getting from get_parent()
 
 ## Initialize combat component
 func setup(gem) -> void:
@@ -43,11 +39,13 @@ func process_combat(delta: float) -> void:
 
 ## Take damage from an attack (legacy method)
 func take_damage(damage: int, attacker: Node3D = null) -> bool:
-	if invulnerable or not player.is_alive or player.is_spectator:
+	if invulnerable or not player.is_alive() or player.is_spectator():
 		return false
 	
 	var is_defeated = gem_data.take_damage(damage)
-	player.health_changed.emit(gem_data.current_health, gem_data.max_health)
+	# Emit health_changed signal through the player's stats component
+	if player.get_stats():
+		player.get_stats().health_changed.emit(gem_data.current_health, gem_data.max_health)
 	
 	if not is_defeated:
 		# Trigger invulnerability and visual feedback
@@ -57,13 +55,13 @@ func take_damage(damage: int, attacker: Node3D = null) -> bool:
 
 ## Take damage using the new damage system
 func take_damage_info(damage_info) -> bool:
-	if invulnerable or not player.is_alive or player.is_spectator:
+	if invulnerable or not player.is_alive() or player.is_spectator():
 		damage_info.damage_dealt = 0
 		return false
 	
 	# Apply damage through the damage system
 	DamageSystem.calculate_damage(damage_info)
-	print("Player ", player.name, " - Base: ", damage_info.base_damage, " Final: ", damage_info.damage_dealt)
+	print("Player - Base: ", damage_info.base_damage, " Final: ", damage_info.damage_dealt)
 	
 	# Show damage number
 	if damage_info.damage_dealt > 0:
@@ -71,7 +69,9 @@ func take_damage_info(damage_info) -> bool:
 	
 	# Apply the calculated damage
 	var is_defeated = gem_data.take_damage(damage_info.damage_dealt)
-	player.health_changed.emit(gem_data.current_health, gem_data.max_health)
+	# Emit health_changed signal through the player's stats component
+	if player.get_stats():
+		player.get_stats().health_changed.emit(gem_data.current_health, gem_data.max_health)
 	damage_received.emit(damage_info)
 	
 	if not is_defeated:
@@ -111,16 +111,16 @@ func start_invulnerability(duration_override: float = -1.0) -> void:
 	# Visual feedback for invulnerability (flashing effect)
 	_apply_invulnerability_visual(duration)
 	
-	await player.get_tree().create_timer(duration).timeout
+	await get_tree().create_timer(duration).timeout
 	invulnerable = false
 
 ## Apply visual feedback for invulnerability
 func _apply_invulnerability_visual(duration: float) -> void:
-	var mesh_instance = player.get_node_or_null("MeshInstance3D")
+	var mesh_instance = player.get_node_or_null("MeshInstance3D") if player else null
 	if mesh_instance and mesh_instance.material_override:
 		var material = mesh_instance.material_override
 		if material is StandardMaterial3D:
-			var tween = player.create_tween()
+			var tween = create_tween()
 			tween.set_loops(int(duration * 4))  # Flash 4 times per second
 			tween.tween_property(material, "albedo_color:a", 0.3, 0.125)
 			tween.tween_property(material, "albedo_color:a", 1.0, 0.125)
@@ -129,8 +129,8 @@ func _apply_invulnerability_visual(duration: float) -> void:
 func _show_damage_number(damage_info) -> void:
 	var damage_number_scene = preload("res://effects/DamageNumber.tscn")
 	var damage_number = damage_number_scene.instantiate()
-	player.get_tree().current_scene.add_child(damage_number)
-	damage_number.global_position = player.global_position + Vector3(0, 1.5, 0)
+	get_tree().current_scene.add_child(damage_number)
+	damage_number.global_position = player.get_global_position() + Vector3(0, 1.5, 0)
 	damage_number.setup(
 		damage_info.damage_dealt,
 		damage_info.damage_type,
@@ -139,7 +139,7 @@ func _show_damage_number(damage_info) -> void:
 
 ## Use the gem's special skill
 func use_skill() -> bool:
-	if not skill_ready or not player.is_alive:
+	if not skill_ready or not player.is_alive():
 		return false
 	
 	skill_ready = false

@@ -17,7 +17,7 @@ extends CharacterBody3D
 @export var gravity_scale: float = 0.0  # For arcing projectiles
 
 ## Internal state
-var owner_player: Player3D
+var owner_player: IPlayer
 var direction: Vector3
 var targets_hit: Array[Node3D] = []
 var current_pierce_count: int = 0
@@ -63,7 +63,7 @@ func _ready() -> void:
 ## @param player: The player who fired this projectile
 ## @param spawn_position: World position to spawn at
 ## @param fire_direction: Initial direction vector (will be normalized)
-func setup(player: Player3D, spawn_position: Vector3, fire_direction: Vector3) -> void:
+func setup(player: IPlayer, spawn_position: Vector3, fire_direction: Vector3) -> void:
 	owner_player = player
 	global_position = spawn_position
 	direction = fire_direction.normalized()

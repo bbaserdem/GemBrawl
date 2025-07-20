@@ -20,7 +20,7 @@ extends Node
 
 ## Skill state
 var is_active: bool = false
-var owner_player: Player3D
+var owner_player: IPlayer
 
 ## Signals
 signal skill_started()
@@ -28,12 +28,12 @@ signal skill_ended()
 signal hit_target(target: Node3D, damage: int)
 
 ## Initialize the skill with its owner
-func setup(player: Player3D) -> void:
+func setup(player: IPlayer) -> void:
 	owner_player = player
 
 ## Execute the skill - to be overridden by specific skills
 func execute() -> void:
-	if not owner_player or not owner_player.is_alive:
+	if not owner_player or not owner_player.is_alive():
 		return
 	
 	is_active = true

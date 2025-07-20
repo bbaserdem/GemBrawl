@@ -17,7 +17,7 @@ const SpawnPointVisual = preload("res://arena/SpawnPointVisual.gd")
 ## Tile configuration
 @export var tile_thickness: float = 0.5  # Height of tile blocks
 @export var height_noise_amount: float = 0.05  # Random height variation
-@export var hazard_height_offset: float = 0.1  # Height offset for hazards
+@export var hazard_height_offset: float = -0.2  # Height offset for hazards (negative to sink them)
 
 ## Visual settings
 @export var floor_material: StandardMaterial3D
@@ -56,34 +56,102 @@ func _create_hex_mesh() -> void:
 	var vertices = PackedVector3Array()
 	var uvs = PackedVector2Array()
 	var normals = PackedVector3Array()
+	var indices = PackedInt32Array()
 	
-	# Top face
-	# Center vertex
-	vertices.push_back(Vector3(0, tile_thickness/2, 0))
-	uvs.push_back(Vector2(0.5, 0.5))
-	normals.push_back(Vector3.UP)
-	
-	# Outer vertices (6 points) - top face
+	# Helper to generate hex vertices at a given height
+	var hex_points = []
 	for i in range(6):
 		var angle = (PI / 3.0) * i - PI / 6.0  # Start at top point
 		var x = hex_size * cos(angle)
 		var z = hex_size * sin(angle)
-		vertices.push_back(Vector3(x, tile_thickness/2, z))
-		
-		# UV coordinates
-		var u = 0.5 + 0.5 * cos(angle)
-		var v = 0.5 + 0.5 * sin(angle)
+		hex_points.append(Vector2(x, z))
+	
+	var half_thickness = tile_thickness / 2.0
+	
+	# Top face (y = tile_thickness/2)
+	# Center vertex
+	vertices.push_back(Vector3(0, half_thickness, 0))
+	uvs.push_back(Vector2(0.5, 0.5))
+	normals.push_back(Vector3.UP)
+	
+	# Outer vertices - top face
+	for i in range(6):
+		vertices.push_back(Vector3(hex_points[i].x, half_thickness, hex_points[i].y))
+		# UV coordinates for top face
+		var u = 0.5 + 0.5 * hex_points[i].x / hex_size
+		var v = 0.5 + 0.5 * hex_points[i].y / hex_size
 		uvs.push_back(Vector2(u, v))
 		normals.push_back(Vector3.UP)
 	
-	# Create triangles
-	var indices = PackedInt32Array()
+	# Bottom face (y = -tile_thickness/2)
+	# Center vertex
+	vertices.push_back(Vector3(0, -half_thickness, 0))
+	uvs.push_back(Vector2(0.5, 0.5))
+	normals.push_back(Vector3.DOWN)
+	
+	# Outer vertices - bottom face
+	for i in range(6):
+		vertices.push_back(Vector3(hex_points[i].x, -half_thickness, hex_points[i].y))
+		# UV coordinates for bottom face
+		var u = 0.5 + 0.5 * hex_points[i].x / hex_size
+		var v = 0.5 + 0.5 * hex_points[i].y / hex_size
+		uvs.push_back(Vector2(u, v))
+		normals.push_back(Vector3.DOWN)
+	
+	# Create indices for top face triangles
 	for i in range(6):
 		indices.push_back(0)  # Center
 		indices.push_back(i + 1)
 		indices.push_back((i % 6) + 1 + 1)
 	# Fix the last triangle
 	indices[17] = 1  # Wrap around to first vertex
+	
+	# Create indices for bottom face triangles (reversed winding)
+	for i in range(6):
+		indices.push_back(7)  # Bottom center
+		indices.push_back(((i + 1) % 6) + 8)
+		indices.push_back(i + 8)
+	
+	# Add vertices for side faces
+	# Each side face needs 4 vertices (2 top, 2 bottom)
+	for i in range(6):
+		var next_i = (i + 1) % 6
+		
+		# Calculate normal for this face
+		# Get the midpoint of the edge
+		var edge_midpoint = (hex_points[i] + hex_points[next_i]) / 2.0
+		# Normal points from center to edge midpoint
+		var face_normal = Vector3(edge_midpoint.x, 0, edge_midpoint.y).normalized()
+		
+		# Top edge vertices
+		vertices.push_back(Vector3(hex_points[i].x, half_thickness, hex_points[i].y))
+		vertices.push_back(Vector3(hex_points[next_i].x, half_thickness, hex_points[next_i].y))
+		# Bottom edge vertices
+		vertices.push_back(Vector3(hex_points[i].x, -half_thickness, hex_points[i].y))
+		vertices.push_back(Vector3(hex_points[next_i].x, -half_thickness, hex_points[next_i].y))
+		
+		# UV mapping for side faces (strip mapping)
+		var u_start = float(i) / 6.0
+		var u_end = float(i + 1) / 6.0
+		uvs.push_back(Vector2(u_start, 0))  # Top left
+		uvs.push_back(Vector2(u_end, 0))    # Top right
+		uvs.push_back(Vector2(u_start, 1))  # Bottom left
+		uvs.push_back(Vector2(u_end, 1))    # Bottom right
+		
+		# Normals for all 4 vertices of this face
+		for j in range(4):
+			normals.push_back(face_normal)
+		
+		# Create two triangles for this side face
+		var base_idx = 14 + i * 4
+		# First triangle (clockwise winding for outward-facing normal)
+		indices.push_back(base_idx)
+		indices.push_back(base_idx + 2)
+		indices.push_back(base_idx + 1)
+		# Second triangle (clockwise winding for outward-facing normal)
+		indices.push_back(base_idx + 1)
+		indices.push_back(base_idx + 2)
+		indices.push_back(base_idx + 3)
 	
 	arrays[Mesh.ARRAY_VERTEX] = vertices
 	arrays[Mesh.ARRAY_TEX_UV] = uvs
@@ -173,6 +241,11 @@ func generate_hazards() -> void:
 			
 			# Check if not already occupied
 			if not hazard_tiles.has(hex_coord):
+				# Remove existing floor tile at this position
+				if floor_tiles.has(hex_coord):
+					floor_tiles[hex_coord].queue_free()
+					floor_tiles.erase(hex_coord)
+				
 				# Determine hazard type
 				var is_spike = placed < spike_count
 				

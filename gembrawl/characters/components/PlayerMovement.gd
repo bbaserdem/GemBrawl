@@ -19,6 +19,10 @@ const HexGrid = preload("res://arena/HexGrid.gd")
 @export var ground_height: float = 0.5
 @export var step_height: float = 0.3
 
+## Safety limits
+@export var max_velocity: float = 50.0  # Maximum velocity magnitude
+@export var max_horizontal_speed: float = 30.0  # Maximum horizontal speed
+
 ## Hex movement settings
 @export var snap_to_hex: bool = false
 @export var hex_move_time: float = 0.2
@@ -60,10 +64,14 @@ func _handle_free_movement(delta: float, input_vector: Vector2) -> void:
 		player.set_velocity(velocity)
 	
 	# Handle jumping
-	if player.is_on_floor() and Input.is_action_just_pressed("jump"):
-		var velocity = player.get_velocity()
-		velocity.y = jump_force
-		player.set_velocity(velocity)
+	if player.is_on_floor() and player.input:
+		var jump_pressed = player.input.is_jump_action_pressed()
+		if jump_pressed:
+			print("[PlayerMovement] Jump action detected, applying jump force")
+			var velocity = player.get_velocity()
+			# Ensure we're not stacking jump forces
+			velocity.y = jump_force  # Set, don't add
+			player.set_velocity(velocity)
 	
 	if input_vector.length() > 0:
 		# Get camera rotation for camera-relative movement
@@ -106,7 +114,28 @@ func _handle_free_movement(delta: float, input_vector: Vector2) -> void:
 		velocity.z = horizontal_velocity.z
 		player.set_velocity(velocity)
 	
+	# Safety check - clamp velocity to prevent physics explosions
+	var final_velocity = player.get_velocity()
+	if final_velocity.length() > max_velocity:
+		print("[PlayerMovement] WARNING: Velocity too high (%f), clamping!" % final_velocity.length())
+		final_velocity = final_velocity.normalized() * max_velocity
+		player.set_velocity(final_velocity)
+	
+	# Additional horizontal speed limit
+	var horizontal_vel = Vector3(final_velocity.x, 0, final_velocity.z)
+	if horizontal_vel.length() > max_horizontal_speed:
+		horizontal_vel = horizontal_vel.normalized() * max_horizontal_speed
+		final_velocity.x = horizontal_vel.x
+		final_velocity.z = horizontal_vel.z
+		player.set_velocity(final_velocity)
+	
 	player.move_and_slide()
+	
+	# Safety check - reset position if player flies too far
+	if player.global_position.y > 50 or player.global_position.y < -50:
+		print("[PlayerMovement] Player fell out of bounds, resetting position!")
+		player.global_position = Vector3(0, 5, 0)
+		player.set_velocity(Vector3.ZERO)
 	
 	# Update current hex position
 	var new_hex = HexGrid.world_to_hex_3d(player.get_global_position())
@@ -124,7 +153,7 @@ func _handle_hex_movement(delta: float, input_vector: Vector2) -> void:
 		player.set_velocity(velocity)
 	
 	# Handle jumping
-	if player.is_on_floor() and Input.is_action_just_pressed("jump"):
+	if player.is_on_floor() and player.input and player.input.is_jump_action_pressed():
 		var velocity = player.get_velocity()
 		velocity.y = jump_force
 		player.set_velocity(velocity)
@@ -178,6 +207,21 @@ func _handle_hex_movement(delta: float, input_vector: Vector2) -> void:
 			player.set_rotation(rotation)
 	
 	# Always apply physics to handle collisions and gravity
+	# Safety check - clamp velocity to prevent physics explosions
+	var final_velocity = player.get_velocity()
+	if final_velocity.length() > max_velocity:
+		print("[PlayerMovement] WARNING: Velocity too high (%f), clamping!" % final_velocity.length())
+		final_velocity = final_velocity.normalized() * max_velocity
+		player.set_velocity(final_velocity)
+	
+	# Additional horizontal speed limit
+	var horizontal_vel = Vector3(final_velocity.x, 0, final_velocity.z)
+	if horizontal_vel.length() > max_horizontal_speed:
+		horizontal_vel = horizontal_vel.normalized() * max_horizontal_speed
+		final_velocity.x = horizontal_vel.x
+		final_velocity.z = horizontal_vel.z
+		player.set_velocity(final_velocity)
+	
 	player.move_and_slide()
 
 ## Convert input vector to hex direction (0-5)

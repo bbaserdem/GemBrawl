@@ -19,6 +19,8 @@ var is_jump_pressed: bool = false
 var is_skill_pressed: bool = false
 var _was_jump_pressed: bool = false  # For tracking just_pressed state
 var _was_skill_pressed: bool = false  # For tracking just_pressed state
+var _jump_just_pressed: bool = false  # True for one frame when jump is pressed
+var _skill_just_pressed: bool = false  # True for one frame when skill is pressed
 
 # Player is now injected from parent instead of getting from get_parent()
 
@@ -36,6 +38,16 @@ func _ready() -> void:
 			device_id = controller_manager.get_player_device_id(player_index)
 	
 	set_process_unhandled_input(true)
+	set_process(true)
+
+func _process(_delta: float) -> void:
+	# Update just_pressed states
+	_jump_just_pressed = is_jump_pressed and not _was_jump_pressed
+	_skill_just_pressed = is_skill_pressed and not _was_skill_pressed
+	
+	# Update was_pressed for next frame
+	_was_jump_pressed = is_jump_pressed
+	_was_skill_pressed = is_skill_pressed
 
 ## Get movement input from player
 func get_movement_input() -> Vector2:
@@ -81,20 +93,10 @@ func is_jump_action_pressed() -> bool:
 		# Use standard input action that accepts any device
 		return Input.is_action_just_pressed("jump")
 	
-	# We need to track just_pressed state manually for specific devices
-	# since Godot's is_joy_button_just_pressed doesn't exist
-	# This is handled through _unhandled_input and the is_jump_pressed flag
-	if device_id >= 0:  # Gamepad
-		# Return true only on the frame the button was pressed
-		var result = is_jump_pressed and not _was_jump_pressed
-		_was_jump_pressed = is_jump_pressed
-		return result
-	elif device_id == -1 and player_index == 0:  # Keyboard
-		# Use the tracked state from _unhandled_input to avoid gamepad interference
-		var result = is_jump_pressed and not _was_jump_pressed
-		_was_jump_pressed = is_jump_pressed
-		return result
-	return false
+	# Return the just_pressed state that was calculated in _process
+	if _jump_just_pressed:
+		print("[PlayerInput] Jump detected for device %d" % device_id)
+	return _jump_just_pressed
 
 ## Check if skill action is pressed
 func is_skill_action_pressed() -> bool:
@@ -102,21 +104,12 @@ func is_skill_action_pressed() -> bool:
 		# Use standard input action that accepts any device
 		return Input.is_action_just_pressed("use_skill")
 	
-	# Same approach for skill button
-	if device_id >= 0:  # Gamepad
-		var result = is_skill_pressed and not _was_skill_pressed
-		_was_skill_pressed = is_skill_pressed
-		return result
-	elif device_id == -1 and player_index == 0:  # Keyboard
-		# Use the tracked state from _unhandled_input to avoid gamepad interference
-		var result = is_skill_pressed and not _was_skill_pressed
-		_was_skill_pressed = is_skill_pressed
-		return result
-	return false
+	# Return the just_pressed state that was calculated in _process
+	return _skill_just_pressed
 
 ## Handle unhandled input events
 func _unhandled_input(event: InputEvent) -> void:
-	if not player.is_local_player:
+	if not player or not player.is_local_player:
 		return
 	
 	# In single-player mode, we don't need to track button states manually
@@ -129,8 +122,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.device != device_id:
 			return
 			
-		if event.button_index == JOY_BUTTON_B:
+		# R2 (button 7) for jump, A (button 0) for skill
+		if event.button_index == 7:  # R2
 			is_jump_pressed = event.pressed
+			print("[PlayerInput] Jump button (R2) %s for device %d" % ["pressed" if event.pressed else "released", device_id])
 		elif event.button_index == JOY_BUTTON_A:
 			is_skill_pressed = event.pressed
 	

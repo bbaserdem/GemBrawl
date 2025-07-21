@@ -103,6 +103,10 @@ func _ensure_components() -> void:
 		movement.player = self
 	else:
 		print("Movement component already exists from scene")
+		# Check if the existing movement has the correct script
+		if not movement.has_method("process_movement"):
+			print("Movement component exists but lacks script - reassigning")
+			movement.set_script(PlayerMovement)
 		movement.player = self
 	
 	if not combat:
@@ -113,6 +117,10 @@ func _ensure_components() -> void:
 		combat.player = self
 	else:
 		print("Combat component already exists from scene")
+		# Check if the existing combat has the correct script
+		if not combat.has_method("process_combat"):
+			print("Combat component exists but lacks script - reassigning")
+			combat.set_script(PlayerCombat)
 		combat.player = self
 	
 	if not stats:
@@ -123,6 +131,10 @@ func _ensure_components() -> void:
 		stats.player = self
 	else:
 		print("Stats component already exists from scene")
+		# Check if the existing stats has the correct script
+		if not stats.has_method("take_damage"):
+			print("Stats component exists but lacks script - reassigning")
+			stats.set_script(PlayerStats)
 		stats.player = self
 	
 	if not input:
@@ -133,6 +145,10 @@ func _ensure_components() -> void:
 		input.player = self
 	else:
 		print("Input component already exists from scene")
+		# Check if the existing input has the correct script
+		if not input.has_method("is_jump_action_pressed"):
+			print("Input component exists but lacks script - reassigning")
+			input.set_script(PlayerInput)
 		input.player = self
 
 ## Public setup method for external initialization
@@ -158,7 +174,10 @@ func _setup_components() -> void:
 ## Apply gem properties to player
 func _apply_gem_properties() -> void:
 	if not gem_data:
+		print("PlayerCharacter: No gem_data found")
 		return
+	
+	print("PlayerCharacter: Applying gem properties for ", gem_data.gem_name)
 	
 	# Apply movement speed
 	if movement:
@@ -167,8 +186,10 @@ func _apply_gem_properties() -> void:
 	# Apply gem visuals
 	if mesh_instance:
 		# Load 3D model if specified
+		print("PlayerCharacter: model_path = ", gem_data.model_path)
 		if gem_data.model_path != "":
 			var gem_model = load(gem_data.model_path)
+			print("PlayerCharacter: gem_model loaded = ", gem_model != null)
 			if gem_model:
 				# Hide the default capsule mesh
 				mesh_instance.mesh = null
@@ -276,6 +297,10 @@ func _connect_signals() -> void:
 		stats.respawning.connect(_on_respawning)
 
 func _physics_process(delta: float) -> void:
+	# Debug check for extreme velocities
+	if velocity.length() > 40:
+		print("[PlayerCharacter] High velocity detected: %s" % velocity)
+	
 	if not is_local_player:
 		return
 	
@@ -288,7 +313,7 @@ func _physics_process(delta: float) -> void:
 			movement.handle_spectator_movement(delta, input_vector)
 	elif stats and stats.is_alive:
 		# Normal movement
-		if movement:
+		if movement and movement.has_method("process_movement"):
 			movement.process_movement(delta, input_vector)
 		
 		# Update combat

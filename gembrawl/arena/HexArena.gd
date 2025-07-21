@@ -329,21 +329,42 @@ func generate_spawn_points() -> void:
 		var world_pos = Vector3(x, 0, z)
 		var hex_coord = HexGrid.world_to_hex_3d(world_pos)
 		
-		# Ensure it's within bounds and not on a hazard
-		if abs(hex_coord.x + hex_coord.y) <= arena_radius and not is_hazard_hex(hex_coord):
+		# Ensure it's within bounds
+		if abs(hex_coord.x + hex_coord.y) <= arena_radius:
 			# If the spawn point is on a hazard, try to find a nearby safe hex
 			if is_hazard_hex(hex_coord):
 				var found_safe = false
-				# Check surrounding hexes
-				var neighbors = HexGrid.get_hex_neighbors(hex_coord)
-				for neighbor in neighbors:
-					if is_valid_hex(neighbor) and not is_hazard_hex(neighbor):
-						hex_coord = neighbor
-						found_safe = true
+				# Check surrounding hexes in expanding search
+				var checked = {hex_coord: true}
+				var to_check = HexGrid.get_hex_neighbors(hex_coord)
+				var search_depth = 0
+				
+				while to_check.size() > 0 and search_depth < 3:
+					var current_ring = to_check.duplicate()
+					to_check.clear()
+					
+					for neighbor in current_ring:
+						if checked.has(neighbor):
+							continue
+						checked[neighbor] = true
+						
+						if is_valid_hex(neighbor) and not is_hazard_hex(neighbor):
+							hex_coord = neighbor
+							found_safe = true
+							break
+						
+						# Add this hex's neighbors to next ring
+						for next_neighbor in HexGrid.get_hex_neighbors(neighbor):
+							if not checked.has(next_neighbor):
+								to_check.append(next_neighbor)
+					
+					if found_safe:
 						break
+					search_depth += 1
 				
 				# If no safe neighbor found, skip this spawn point
 				if not found_safe:
+					push_warning("Could not find safe spawn point for player %d" % (i + 1))
 					continue
 			
 			# Create spawn point with visual indicator
@@ -366,6 +387,9 @@ func generate_spawn_points() -> void:
 			
 			add_child(spawn_visual)
 			spawn_points.append(spawn_visual)
+			
+			# Add to spawn_points group for SpawnManager
+			spawn_visual.add_to_group("spawn_points")
 
 ## Get a random valid spawn position
 func get_random_spawn_position() -> Vector3:
